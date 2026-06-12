@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social Impact Conferences — Juniper Collective</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Montserrat:wght@400;500;600&family=Oranienbaum&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green-dark:#30523a; --green-sage:#72997d; --gold:#c1a55f;
+    --cream:#f2ede4; --cream-dark:#e8e1d5; --text-dark:#1e2e23;
+    --text-mid:#4a5e50; --text-light:#7a8f80; --white:#fff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--cream);color:var(--text-dark);font-family:'Montserrat',sans-serif;font-size:14px;line-height:1.6;}
+
+  .header{background:var(--green-dark);padding:48px 40px 36px;}
+  .header-label{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;}
+  .header h1{font-family:'Oranienbaum',serif;font-size:clamp(30px,5vw,50px);font-weight:400;color:var(--cream);line-height:1.1;max-width:640px;text-transform:uppercase;letter-spacing:.04em;}
+  .header-sub{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;font-weight:300;color:var(--green-sage);margin-top:12px;}
+
+  .controls{background:var(--white);border-bottom:1px solid var(--cream-dark);position:sticky;top:0;z-index:100;}
+  .controls-inner{padding:18px 40px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;}
+  .search-wrap{position:relative;flex:1;min-width:200px;max-width:280px;}
+  .search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-light);pointer-events:none;}
+  .search-input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--cream-dark);border-radius:4px;font-family:'Montserrat',sans-serif;font-size:12px;background:var(--cream);color:var(--text-dark);outline:none;}
+  .search-input:focus{border-color:var(--green-sage);}
+
+  .filter-triggers{display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex:1;}
+  .filter-trigger{padding:7px 14px;border-radius:20px;border:1px solid var(--cream-dark);background:var(--white);font-family:'Montserrat',sans-serif;font-size:12px;font-weight:500;color:var(--text-mid);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+  .filter-trigger:hover{border-color:var(--green-sage);color:var(--green-dark);}
+  .filter-trigger.active{background:var(--green-dark);border-color:var(--green-dark);color:var(--cream);}
+  .filter-trigger.open{border-color:var(--green-dark);}
+  .filter-count{background:var(--green-dark);color:var(--cream);padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;display:none;}
+  .filter-trigger.active .filter-count{background:rgba(242,237,228,.25);color:var(--cream);}
+  .filter-trigger.has-selections .filter-count{display:inline-block;}
+  .filter-caret{font-size:9px;transition:transform .2s;opacity:.7;}
+  .filter-trigger.open .filter-caret{transform:rotate(180deg);}
+
+  .toggle-upcoming{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--text-mid);cursor:pointer;white-space:nowrap;user-select:none;}
+  .toggle-upcoming input{display:none;}
+  .toggle-track{width:34px;height:18px;border-radius:10px;background:var(--cream-dark);position:relative;transition:background .15s;}
+  .toggle-track::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--white);transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+  .toggle-upcoming input:checked + .toggle-track{background:var(--green-sage);}
+  .toggle-upcoming input:checked + .toggle-track::after{transform:translateX(16px);}
+
+  .clear-btn{font-size:11px;font-weight:500;color:var(--text-light);background:none;border:none;cursor:pointer;text-decoration:underline;padding:4px 8px;white-space:nowrap;font-family:'Montserrat',sans-serif;}
+  .clear-btn:hover{color:var(--green-dark);}
+
+  .filter-panel{background:var(--cream);border-top:1px solid var(--cream-dark);padding:16px 40px;display:none;}
+  .filter-panel.open{display:block;}
+  .panel-options{display:flex;flex-wrap:wrap;gap:6px;}
+  .option{padding:6px 12px;border-radius:16px;border:1px solid var(--cream-dark);background:var(--white);font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;color:var(--text-mid);cursor:pointer;transition:all .15s;text-transform:capitalize;}
+  .option:hover{border-color:var(--green-sage);color:var(--green-dark);}
+  .option.selected{background:var(--green-sage);border-color:var(--green-sage);color:var(--white);}
+
+  /* Date panel */
+  .date-row{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;}
+  .date-field{display:flex;flex-direction:column;gap:4px;}
+  .date-field label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-light);}
+  .date-field input{padding:7px 10px;border:1px solid var(--cream-dark);border-radius:4px;font-family:'Montserrat',sans-serif;font-size:12px;background:var(--white);color:var(--text-dark);}
+  .date-presets{display:flex;gap:6px;flex-wrap:wrap;}
+
+  /* Price slider */
+  .price-panel-inner{max-width:420px;}
+  .price-readout{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:17px;color:var(--green-dark);margin-bottom:14px;}
+  .slider{position:relative;height:30px;}
+  .slider .track{position:absolute;top:13px;left:0;right:0;height:4px;border-radius:2px;background:var(--cream-dark);}
+  .slider .range{position:absolute;top:13px;height:4px;border-radius:2px;background:var(--green-sage);}
+  .slider input[type=range]{position:absolute;top:0;left:0;width:100%;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none;height:30px;}
+  .slider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:18px;height:18px;border-radius:50%;background:var(--green-dark);border:2px solid var(--white);box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer;margin-top:0;}
+  .slider input[type=range]::-moz-range-thumb{pointer-events:auto;width:18px;height:18px;border-radius:50%;background:var(--green-dark);border:2px solid var(--white);cursor:pointer;}
+  .price-include{margin-top:16px;display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--text-mid);cursor:pointer;}
+  .price-include input{accent-color:var(--green-sage);width:15px;height:15px;}
+
+  .main{padding:32px 40px 60px;max-width:1240px;}
+  .results-bar{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--cream-dark);}
+  .results-count{font-family:'Cormorant Garamond',serif;font-size:20px;font-style:italic;color:var(--text-mid);}
+  .results-count strong{color:var(--green-dark);font-style:normal;font-weight:400;}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:18px;}
+  .card{background:var(--white);border-radius:6px;overflow:hidden;display:flex;flex-direction:column;border:1px solid transparent;transition:transform .15s,box-shadow .15s;}
+  .card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(48,82,58,.1);border-color:var(--cream-dark);}
+  .card-bar{height:5px;background:var(--bar,var(--green-sage));}
+  .card-body{padding:18px;flex:1;display:flex;flex-direction:column;}
+  .card-meta-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;}
+  .card-topics{font-size:9px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--text-light);line-height:1.4;}
+  .card-format{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:3px;white-space:nowrap;}
+  .f-inperson{background:rgba(193,165,95,.16);color:#9a7e3a;}
+  .f-virtual{background:rgba(48,82,58,.1);color:var(--green-dark);}
+  .f-hybrid{background:rgba(114,153,125,.18);color:#3f6b4f;}
+  .card-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;line-height:1.22;color:var(--green-dark);margin-bottom:4px;}
+  .card-org{font-size:11px;font-weight:600;letter-spacing:.03em;color:var(--text-light);margin-bottom:11px;}
+  .card-meta{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+  .card-meta span{font-size:12px;color:var(--text-mid);display:flex;align-items:center;gap:6px;}
+  .card-meta svg{color:var(--green-sage);flex-shrink:0;}
+  .card-price{font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;color:var(--green-dark);margin-bottom:12px;letter-spacing:.02em;}
+  .card-price .note{display:block;font-weight:400;font-size:10px;color:var(--text-light);letter-spacing:.02em;margin-top:2px;}
+  .card-audience{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;line-height:1.4;color:var(--text-mid);flex:1;margin-bottom:14px;text-transform:capitalize;}
+  .card-audience b{font-style:normal;font-weight:600;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-light);display:block;margin-bottom:3px;}
+  .card-summary{font-size:12.5px;line-height:1.5;color:var(--text-mid);margin-bottom:13px;}
+  .card-link{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--green-dark);text-decoration:none;border-bottom:1px solid var(--gold);padding-bottom:1px;align-self:flex-start;transition:color .15s;}
+  .card-link:hover{color:var(--gold);}
+  .state-msg{text-align:center;padding:70px 40px;}
+  .state-msg p{font-family:'Cormorant Garamond',serif;font-size:20px;font-style:italic;color:var(--text-light);}
+
+  @media(max-width:600px){
+    .header{padding:28px 20px 22px;}
+    .controls-inner{padding:14px 20px;}
+    .filter-panel{padding:14px 20px;}
+    .main{padding:20px 20px 48px;}
+    .grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-label">Juniper Collective</div>
+  <h1>Social Impact Conferences</h1>
+  <p class="header-sub">A curated directory of social impact conferences worldwide</p>
+</div>
+
+<div class="controls">
+  <div class="controls-inner">
+    <div class="search-wrap">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search-input" type="text" id="search" placeholder="Search conferences...">
+    </div>
+    <div class="filter-triggers">
+      <button class="filter-trigger" data-filter="date">Dates <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
+      <button class="filter-trigger" data-filter="country">Country <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
+      <button class="filter-trigger" data-filter="city">City <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
+      <button class="filter-trigger" data-filter="format">Format <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
+      <button class="filter-trigger" data-filter="price">Price <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
+      <button class="filter-trigger" data-filter="topic">Topic <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
+      <button class="filter-trigger" data-filter="attendee">Who it's for <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
+      <label class="toggle-upcoming"><input type="checkbox" id="upcoming-toggle" checked><span class="toggle-track"></span>Upcoming only</label>
+      <button class="clear-btn" id="clear-all">Clear all</button>
+    </div>
+  </div>
+
+  <div class="filter-panel" data-panel="date">
+    <div class="date-row">
+      <div class="date-field"><label>From</label><input type="date" id="date-from"></div>
+      <div class="date-field"><label>To</label><input type="date" id="date-to"></div>
+      <div class="date-presets">
+        <button class="option" data-preset="1">Next month</button>
+        <button class="option" data-preset="3">Next 3 months</button>
+        <button class="option" data-preset="6">Next 6 months</button>
+        <button class="clear-btn" id="clear-dates">Clear dates</button>
+      </div>
+    </div>
+  </div>
+  <div class="filter-panel" data-panel="country"><div class="panel-options" id="country-options"></div></div>
+  <div class="filter-panel" data-panel="city"><div class="panel-options" id="city-options"></div></div>
+  <div class="filter-panel" data-panel="format"><div class="panel-options" id="format-options"></div></div>
+  <div class="filter-panel" data-panel="price">
+    <div class="price-panel-inner">
+      <div class="price-readout" id="price-readout"></div>
+      <div class="slider">
+        <div class="track"></div><div class="range" id="price-range-fill"></div>
+        <input type="range" id="price-min" min="0" max="100" value="0">
+        <input type="range" id="price-max" min="0" max="100" value="100">
+      </div>
+      <label class="price-include"><input type="checkbox" id="include-unpriced" checked>Include conferences without a set price (TBD, application, or invite only)</label>
+    </div>
+  </div>
+  <div class="filter-panel" data-panel="topic"><div class="panel-options" id="topic-options"></div></div>
+  <div class="filter-panel" data-panel="attendee"><div class="panel-options" id="attendee-options"></div></div>
+</div>
+
+<div class="main">
+  <div id="results-bar" class="results-bar" style="display:none;"><span class="results-count" id="count-label"></span></div>
+  <div class="grid" id="grid"></div>
+  <div id="state" class="state-msg"><p>Loading conferences...</p></div>
+</div>
+
+<script>
+let CONF_DATA = [];
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSDq35g0mKfUa1gI9RFK_JgpY__Y7XhzhUm6uNL0W18rkoHjoizwMuagUK2CvWiXAgfntXS8TjKxi-m/pub?output=csv";
+const CONF_FALLBACK = [{"name": "Leading for Good 2025: Building Bridges – Pathways to Purpose)", "org": "Karen Weigert Doug Woods Michael Behnam", "start": "2025-03-20", "end": "2025-03-20", "city": "Chicago", "state": "Illinois", "country": "United States", "format": "In-Person", "priceStatus": "TBD", "priceMin": null, "priceMax": null, "priceNotes": "", "topics": ["CSR, ESG & Corporate Citizenship", "Collective Impact & Cross-Sector Leadership", "Social Entrepreneurship"], "attendees": ["CSR, ESG & Corporate Impact professionals", "Social entrepreneurs & founders", "Nonprofit & NGO leaders"], "link": "https://www.luc.edu/baumhartcenter/programs/leadingforgood/leadingforgood2025/", "overview": "A gathering of cross-sector leaders focused on accelerating social and environmental impact to create thriving communities and an inclusive economy."}, {"name": "STRIDE: A Social Impact Summit", "org": "Kristin Brackemyre Douglas Pinkham", "start": "2025-11-13", "end": "2025-11-13", "city": "Online", "state": "", "country": "", "format": "Virtual", "priceStatus": "Priced", "priceMin": 349, "priceMax": 495, "priceNotes": "", "topics": ["CSR, ESG & Corporate Citizenship", "Philanthropy & Grantmaking", "Collective Impact & Cross-Sector Leadership"], "attendees": ["CSR, ESG & Corporate Impact professionals", "Policymakers & Government", "Corporate executives (C-suite)"], "link": "https://pac.org/stride", "overview": "A summit dedicated to navigating the intersection of public affairs, community involvement, and belonging to help organizations future-proof their business and advance social impact priorities."}, {"name": "GreenBiz 26", "org": "Hana Kajimura Joel Makower Ellie Buechner", "start": "2026-02-17", "end": "2026-02-17", "city": "Phoenix", "state": "Arizona", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 2500, "priceMax": 3700, "priceNotes": "", "topics": ["Climate & Sustainability", "CSR, ESG & Corporate Citizenship"], "attendees": ["Climate & Sustainability professionals", "CSR, ESG & Corporate Impact professionals", "Corporate executives (C-suite)"], "link": "https://trellis.net/events/greenbiz/", "overview": "An annual event for sustainable business leaders to explore emerging trends, master essential skills for corporate climate action, and network with peers across the sustainability ecosystem."}, {"name": "Elevate 2026", "org": "Keely O'Sullivan Kurtz Gene Moses", "start": "2026-02-24", "end": "2026-02-26", "city": "Online", "state": "", "country": "", "format": "Virtual", "priceStatus": "Priced", "priceMin": 125, "priceMax": 125, "priceNotes": "", "topics": ["Fundraising & Development", "Collective Impact & Cross-Sector Leadership"], "attendees": ["Nonprofit & NGO leaders", "Fundraising & Development professionals"], "link": "https://events.ringcentral.com/events/elevate-2026/registration", "overview": "A conference designed to help social-impact leaders move beyond \"survival mode\" by exploring smarter systems, leadership development, and community -building strategies."}, {"name": "Global Volunteering Summit 2026", "org": "Abhishek Humbad Alissa May", "start": "2026-02-24", "end": "2026-02-26", "city": "San Jose", "state": "California", "country": "United States", "format": "In-Person", "priceStatus": "Free", "priceMin": 0, "priceMax": 0, "priceNotes": "Application/nomination required", "topics": ["Employee Engagement & Volunteering", "CSR, ESG & Corporate Citizenship"], "attendees": ["CSR, ESG & Corporate Impact professionals", "Nonprofit & NGO leaders", "Technologists & Data professionals"], "link": "https://www.goodera.com/global-volunteering-summit", "overview": "An gathering of social impact leaders designed to accelerate innovation in employee volunteering, share data-driven insights like the Volunteering Quotient report, and spark a global movement toward sustainable corporate service."}, {"name": "AWS IMAGINE for Nonprofits", "org": "David Levy Rick Buettner Lauren Stovall", "start": "2026-03-19", "end": "2026-03-19", "city": "Oxon Hill", "state": "Maryland", "country": "United States", "format": "In-Person", "priceStatus": "Free", "priceMin": 0, "priceMax": 0, "priceNotes": "", "topics": ["Nonprofit Technology & Data", "AI for Good"], "attendees": ["Nonprofit & NGO leaders", "Technologists & Data professionals"], "link": "https://aws.amazon.com/government-education/nonprofits/imagine-nonprofit/", "overview": "This event brings together nonprofit changemakers and AWS experts to explore how advanced technologies like AI and cloud computing can amplify humanity's capacity for good."}, {"name": "Leading for Good 2026: Forging the Future", "org": "Karen Weigert Doug Woods Malini Suchak", "start": "2026-03-19", "end": "2026-03-19", "city": "Chicago", "state": "Illinois", "country": "United States", "format": "In-Person", "priceStatus": "TBD", "priceMin": null, "priceMax": null, "priceNotes": "", "topics": ["CSR, ESG & Corporate Citizenship", "Collective Impact & Cross-Sector Leadership"], "attendees": ["CSR, ESG & Corporate Impact professionals", "Nonprofit & NGO leaders", "Policymakers & Government"], "link": "https://www.luc.edu/baumhartcenter/programs/leadingforgood/leadingforgood2026/", "overview": "A conference that brings together cross-sector leaders to explore innovation, collaboration, and courageous action for driving lasting social and environmental change."}, {"name": "Impact Investment Summit Asia Pacific 2026", "org": "Alex Feher Rob Irving", "start": "2026-03-25", "end": "2026-03-26", "city": "Sydney", "state": "", "country": "Australia", "format": "In-Person", "priceStatus": "Priced", "priceMin": 270, "priceMax": 1800, "priceNotes": "", "topics": ["Impact Investing & Finance", "Philanthropy & Grantmaking"], "attendees": ["Impact investors & VCs", "Funders, Foundations & Philanthropists", "Policymakers & Government"], "link": "https://impactinvestmentsummit.com/", "overview": "A gathering for the impact investment ecosystem to connect capital with purpose through expert-led sessions, live deal pitching, and strategic networking."}, {"name": "ChangeNOW 2026", "org": "Santiago Lefebvre Rose-May Lucotte Kevin Tayebaly", "start": "2026-03-30", "end": "2026-04-01", "city": "Paris", "state": "", "country": "France", "format": "In-Person", "priceStatus": "Priced", "priceMin": 23.32, "priceMax": 1457.5, "priceNotes": "", "topics": ["Climate & Sustainability", "Social Entrepreneurship", "Impact Investing & Finance"], "attendees": ["Social entrepreneurs & founders", "Impact investors & VCs", "Policymakers & Government", "Academics, Researchers & Students"], "link": "https://www.changenow.world/", "overview": "The world’s largest summit for the planet, bringing together global changemakers and innovative solutions to accelerate the environmental and social transition through networking and concrete action."}, {"name": "2026 Corporate Social Impact Summit", "org": "Dale Strange Todd Lant Mike Gianoni", "start": "2026-03-30", "end": "2026-04-01", "city": "Nashville", "state": "Tennessee", "country": "United States", "format": "In-Person", "priceStatus": "Free", "priceMin": 0, "priceMax": 0, "priceNotes": "", "topics": ["CSR, ESG & Corporate Citizenship", "Employee Engagement & Volunteering"], "attendees": ["CSR, ESG & Corporate Impact professionals", "Corporate executives (C-suite)"], "link": "https://blackbaud.swoogo.com/csisummitna26", "overview": "A gathering for CSR professionals to collaborate on the future of corporate philanthropy, explore AI-driven social impact innovation, and preview upcoming YourCause product developments."}, {"name": "LA Climate Week", "org": "Dan Thorman Nishant Mani Shawn Sweeney", "start": "2026-04-08", "end": "2026-04-15", "city": "Los Angeles", "state": "California", "country": "United States", "format": "Hybrid", "priceStatus": "Priced", "priceMin": 0, "priceMax": 500, "priceNotes": "", "topics": ["Climate & Sustainability"], "attendees": ["Climate & Sustainability professionals", "Policymakers & Government", "Social entrepreneurs & founders"], "link": "https://laclimateweek.com/", "overview": "A community-powered movement and week-long series of events designed to unite diverse voices across Los Angeles to collaborate on equitable climate solutions and systemic change."}, {"name": "Good Tech Summit '26", "org": "Andrew Means Alethea Hannemann Alice Hendricks", "start": "2026-04-09", "end": "2026-04-11", "city": "Washington", "state": "D.C.", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 495, "priceMax": 895, "priceNotes": "", "topics": ["Nonprofit Technology & Data", "AI for Good"], "attendees": ["Technologists & Data professionals", "Nonprofit & NGO leaders"], "link": "https://www.goodtechtogether.org/", "overview": "A collaborative community and event series that brings together social sector practitioners to solve complex problems through vendor-neutral innovation, AI literacy, and peer-led training."}, {"name": "Social Enterprise Collective 2026", "org": "Bree Jensen Meagan Schmidt", "start": "2026-04-10", "end": "2026-04-10", "city": "Culver City", "state": "California", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 75, "priceMax": 450, "priceNotes": "", "topics": ["Social Entrepreneurship", "Impact Investing & Finance"], "attendees": ["Social entrepreneurs & founders", "Funders, Foundations & Philanthropists", "Policymakers & Government"], "link": "https://www.thesocialimpact.co/sec2026", "overview": "This event, themed \"Catalyzing Philanthropy, Vision, and Action for Collective Impact,\" is a cross-sector summit that brings together leaders to transform social impact ideas into action through panels, pitch competitions, and immersive networking."}, {"name": "2026 Collective Impact Action Summit", "org": "Jennifer Splansky Juster Courtney Williams Robertson Tracy Timmons-Gray", "start": "2026-04-14", "end": "2026-04-16", "city": "Online", "state": "", "country": "", "format": "Virtual", "priceStatus": "Priced", "priceMin": 199, "priceMax": 549, "priceNotes": "", "topics": ["Collective Impact & Cross-Sector Leadership", "Philanthropy & Grantmaking"], "attendees": ["Nonprofit & NGO leaders", "Funders, Foundations & Philanthropists"], "link": "https://collectiveimpactforum.org/event/2026-collective-impact-action-summit/", "overview": "An online gathering designed to help social change practitioners reconnect through community joy and gain practical tools in areas like community engagement, data, and policy to advance collective impact work."}, {"name": "Virtual Workplace Fundraising + Volunteering Summit", "org": "Adam Weinger Julia Beltran Erin Lavender", "start": "2026-04-14", "end": "2026-04-15", "city": "Online", "state": "", "country": "", "format": "Virtual", "priceStatus": "Free", "priceMin": 0, "priceMax": 0, "priceNotes": "", "topics": ["Fundraising & Development", "Employee Engagement & Volunteering", "CSR, ESG & Corporate Citizenship"], "attendees": ["Fundraising & Development professionals", "CSR, ESG & Corporate Impact professionals"], "link": "https://doublethedonation.com/workplace-fundraising-summit/", "overview": "A virtual conference designed to help nonprofits and schools maximize their revenue through strategies in matching gifts, volunteer grants, payroll giving, and corporate partnerships."}, {"name": "2025/26 She Shapes AI Conference and Global Awards Ceremony", "org": "Julia Stamm Rachel Gutierrez", "start": "2026-04-16", "end": "2026-04-16", "city": "London", "state": "", "country": "United Kingdom", "format": "Hybrid", "priceStatus": "Priced", "priceMin": 13.46, "priceMax": 83.45, "priceNotes": "", "topics": ["AI for Good", "DEI & Inclusion"], "attendees": ["Technologists & Data professionals", "Social entrepreneurs & founders", "Policymakers & Government"], "link": "https://www.sheshapes.ai/awards", "overview": "An annual global gathering and awards ceremony that spotlights and connects female leaders who are developing and applying AI responsibly to deliver measurable real-world impact."}, {"name": "SF Climate Week", "org": "Evan Hynes Jesse Hynes Justin Hardin", "start": "2026-04-18", "end": "2026-04-26", "city": "San Francisco", "state": "California", "country": "United States", "format": "Hybrid", "priceStatus": "Priced", "priceMin": 0, "priceMax": 500, "priceNotes": "", "topics": ["Climate & Sustainability", "Impact Investing & Finance"], "attendees": ["Climate & Sustainability professionals", "Impact investors & VCs", "Policymakers & Government"], "link": "https://www.sfclimateweek.org/", "overview": "A decentralized, week-long series of community-organized events designed to accelerate climate solutions through collaboration between tech innovation, policy, and grassroots action."}, {"name": "Engage for Good | 2026", "org": "Muneer Panjwani Meredith Lakis Linda Garcia", "start": "2026-04-21", "end": "2026-04-24", "city": "Indian Wells", "state": "California", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 2395, "priceMax": 4995, "priceNotes": "", "topics": ["CSR, ESG & Corporate Citizenship", "Fundraising & Development", "DEI & Inclusion"], "attendees": ["CSR, ESG & Corporate Impact professionals", "Nonprofit & NGO leaders", "Consultants & Service providers"], "link": "https://events.engageforgood.com/conference", "overview": "This event is for CSR and nonprofit professionals to cultivate high-impact partnerships through data-driven workshops, cross-sector networking, and the celebration of excellence at the annual Halo Awards."}, {"name": "2026 Skoll World Forum", "org": "Marla Blow Don Gips", "start": "2026-04-21", "end": "2026-04-24", "city": "Oxford", "state": "", "country": "United Kingdom", "format": "Hybrid", "priceStatus": "Priced", "priceMin": 0, "priceMax": 4500, "priceNotes": "Free virtual option; paid in-person", "topics": ["Social Entrepreneurship", "Impact Investing & Finance", "Collective Impact & Cross-Sector Leadership"], "attendees": ["Social entrepreneurs & founders", "Impact investors & VCs", "Funders, Foundations & Philanthropists", "Nonprofit & NGO leaders"], "link": "https://skoll.org/skoll-world-forum/", "overview": "An annual international convening that accelerates innovative solutions to the world’s most pressing problems by connecting social entrepreneurs with essential partners and platforms."}, {"name": "2026 Corporate Citizenship Summit", "org": "Brian P. Campbell Jeff Hoffman Lindsay Beltzer", "start": "2026-04-23", "end": "2026-04-24", "city": "New York City", "state": "New York", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 1795, "priceMax": 2095, "priceNotes": "", "topics": ["CSR, ESG & Corporate Citizenship", "Climate & Sustainability"], "attendees": ["CSR, ESG & Corporate Impact professionals", "Corporate executives (C-suite)", "Policymakers & Government"], "link": "https://www.conference-board.org/events/corporate-citizenship", "overview": "A leadership forum focused on helping organizations navigate the evolving responsibilities of business in society by aligning corporate values with strategy and managing ESG risks."}, {"name": "Boston Climate Week", "org": "Evan Hynes Jesse Hynes Linda P. Henry", "start": "2026-05-03", "end": "2026-05-10", "city": "Greater Boston", "state": "Massachusetts", "country": "United States", "format": "Hybrid", "priceStatus": "Priced", "priceMin": 0, "priceMax": 500, "priceNotes": "", "topics": ["Climate & Sustainability"], "attendees": ["Climate & Sustainability professionals", "Impact investors & VCs", "Policymakers & Government", "Academics, Researchers & Students"], "link": "https://bostonclimateweek.org/", "overview": "A week-long citywide initiative featuring over 100 events designed to accelerate climate action, spotlight local solutions, and build a resilient community across the Greater Boston area."}, {"name": "Building Together 2026", "org": "Kathleen Enright Kristen Scott Kennedy Kristin Hoy", "start": "2026-05-04", "end": "2026-05-07", "city": "Seattle", "state": "Washington", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 1700, "priceMax": 2900, "priceNotes": "", "topics": ["Philanthropy & Grantmaking"], "attendees": ["Funders, Foundations & Philanthropists"], "link": "https://cof.org/event/building-together-2026", "overview": "A leadership development experience designed for philanthropy professionals to build the mindset and skills needed to collaborate effectively across differences and foster belonging within their communities."}, {"name": "Responsible Business USA 2026", "org": "Katie Kilner Sinaan Farooqui Aseem Sainudheen", "start": "2026-05-05", "end": "2026-05-06", "city": "Boston", "state": "Massachusetts", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 1699, "priceMax": 3999, "priceNotes": "", "topics": ["CSR, ESG & Corporate Citizenship", "Climate & Sustainability"], "attendees": ["CSR, ESG & Corporate Impact professionals", "Corporate executives (C-suite)", "Impact investors & VCs"], "link": "https://events.reutersevents.com/sustainable-business/responsible-business-usa", "overview": "A forum focused on how North American businesses can operationalize sustainability, navigate regulatory fragmentation, and ensure ESG remains a core driver of commercial growth and resilience."}, {"name": "Greater Purpose Conference West", "org": "Brad Offman Claire Elizabeth W.", "start": "2026-05-11", "end": "2026-05-12", "city": "Vancouver", "state": "", "country": "Canada", "format": "In-Person", "priceStatus": "Priced", "priceMin": 779, "priceMax": 1299, "priceNotes": "", "topics": ["Social Entrepreneurship", "CSR, ESG & Corporate Citizenship"], "attendees": ["Social entrepreneurs & founders", "Nonprofit & NGO leaders", "CSR, ESG & Corporate Impact professionals"], "link": "https://www.greaterpurpose.inc/conference-west", "overview": "A gathering for purpose-driven leaders to explore partnerships, social impact strategies, and the evolution of the purpose economy through high-level keynotes and networking."}, {"name": "d&i Leaders Global Workplace Inclusion Forum 2026", "org": "Mark Baker d&i Leaders Team", "start": "2026-05-12", "end": "2026-05-13", "city": "London", "state": "", "country": "United Kingdom", "format": "Hybrid", "priceStatus": "Priced", "priceMin": 779.33, "priceMax": 1115.83, "priceNotes": "", "topics": ["DEI & Inclusion"], "attendees": ["Corporate executives (C-suite)", "CSR, ESG & Corporate Impact professionals"], "link": "https://dileaders.com/globalforum/", "overview": "The leading annual global event for senior diversity and inclusion practitioners to share practical strategies, network with peers, and drive measurable change in workplace culture."}, {"name": "2026 Social Impact World Forum", "org": "Jeremy Brown Social Impact World Team", "start": "2026-05-21", "end": "2026-05-21", "city": "San Francisco", "state": "California", "country": "United States", "format": "In-Person", "priceStatus": "Application or invite only", "priceMin": null, "priceMax": null, "priceNotes": "", "topics": ["CSR, ESG & Corporate Citizenship", "Collective Impact & Cross-Sector Leadership"], "attendees": ["CSR, ESG & Corporate Impact professionals", "Corporate executives (C-suite)"], "link": "https://www.socialimpactworld.com/forum/", "overview": "A highly curated, invite-only conference designed for corporate impact practitioners to share insights on what is working in the field and build deep peer connections."}, {"name": "Katapult Future Fest", "org": "Alison Fort Evita Chiang Zanuso Danielle DeRose", "start": "2026-05-27", "end": "2026-05-29", "city": "Amsterdam", "state": "", "country": "Netherlands", "format": "In-Person", "priceStatus": "Priced", "priceMin": 524.7, "priceMax": 1807.3, "priceNotes": "", "topics": ["Social Entrepreneurship", "Impact Investing & Finance", "AI for Good"], "attendees": ["Social entrepreneurs & founders", "Impact investors & VCs", "Technologists & Data professionals"], "link": "https://katapultfuturefest.com/", "overview": "A global impact festival that convenes investors, entrepreneurs, and creatives to explore regenerative society blueprints through systemic investing, deep tech, and cultural transformation."}, {"name": "GEO 2026 National Conference", "org": "Marcus Walton Lauren Gentry Anita Patel", "start": "2026-06-01", "end": "2026-06-03", "city": "Boston", "state": "Massachusetts", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 1600, "priceMax": 2700, "priceNotes": "", "topics": ["Philanthropy & Grantmaking"], "attendees": ["Funders, Foundations & Philanthropists", "Consultants & Service providers"], "link": "https://www.geofunders.org/event/2026-national-conference/", "overview": "The conference focuses on transforming philanthropic culture and practice to support racial equity and thriving nonprofits through peer connection, bold ideas, and actionable grantmaking tools."}, {"name": "Hollywood Climate Summit", "org": "", "start": "2026-06-03", "end": "2026-06-04", "city": "Los Angeles", "state": "California", "country": "United States", "format": "Hybrid", "priceStatus": "Priced", "priceMin": 0, "priceMax": 350, "priceNotes": "Free virtual option; paid in-person", "topics": ["Storytelling & Creative Impact", "Climate & Sustainability"], "attendees": ["Climate & Sustainability professionals", "Corporate executives (C-suite)"], "link": "https://www.hollywoodclimatesummit.com/", "overview": "An annual, multi-day conference that creates a community space for thousands of cross-sector entertainment and media professionals to take action on climate through storytelling, interactive workshops, and advocacy."}, {"name": "Benevity Live! 2026", "org": "Soraya Alexander Sona Khosla Cristine Kao", "start": "2026-06-02", "end": "2026-06-04", "city": "Scottsdale", "state": "Arizona", "country": "United States", "format": "Hybrid", "priceStatus": "Priced", "priceMin": 0, "priceMax": 2549, "priceNotes": "Free virtual option; paid in-person", "topics": ["CSR, ESG & Corporate Citizenship", "Employee Engagement & Volunteering", "DEI & Inclusion"], "attendees": ["CSR, ESG & Corporate Impact professionals", "Nonprofit & NGO leaders"], "link": "https://live.benevity.com/event/2026/home", "overview": "A gathering for purpose -driven leaders to share insights, build courage through connection, and discover new pathways for corporate social responsibility and community impact."}, {"name": "Social Innovation Summit 2026", "org": "Zeev Klein Mel O. John MacPhee", "start": "2026-06-02", "end": "2026-06-03", "city": "Atlanta", "state": "Georgia", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 1895, "priceMax": 1895, "priceNotes": "", "topics": ["Social Entrepreneurship", "Impact Investing & Finance", "Collective Impact & Cross-Sector Leadership"], "attendees": ["Social entrepreneurs & founders", "Impact investors & VCs", "Funders, Foundations & Philanthropists", "CSR, ESG & Corporate Impact professionals"], "link": "https://socialinnovation.com/", "overview": "This event brings together global executives, philanthropists, and tech innovators to catalyze partnerships and scale revolutionary solutions for social impact."}, {"name": "SB’26 San Diego", "org": "KoAnn Vikoren Skrzyniarz Julie Tonroy Dimitar Vlahov", "start": "2026-06-08", "end": "2026-06-10", "city": "San Diego", "state": "California", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 2795, "priceMax": 3995, "priceNotes": "", "topics": ["Climate & Sustainability", "CSR, ESG & Corporate Citizenship"], "attendees": ["Climate & Sustainability professionals", "Corporate executives (C-suite)"], "link": "https://events.sustainablebrands.com/conferences/sustainablebrands/", "overview": "A global gathering where brand leaders and sustainability practitioners collaborate to integrate environmental and social purpose into core business strategy to drive innovation and ROI."}, {"name": "Accelerate: Data and AI for Social Impact Conference", "org": "Perry Hewitt Danil Mikhailov Emma Donelan", "start": "2026-06-11", "end": "2026-06-11", "city": "Bogotá", "state": "", "country": "Colombia", "format": "In-Person", "priceStatus": "Application or invite only", "priceMin": null, "priceMax": null, "priceNotes": "", "topics": ["AI for Good", "Nonprofit Technology & Data"], "attendees": ["Technologists & Data professionals", "Academics, Researchers & Students", "Funders, Foundations & Philanthropists"], "link": "https://data.org/get-involved/accelerate-conference/", "overview": "This event brings together global leaders for a premier convening focused on leveraging cross-sector AI innovations to drive scalable solutions in public health and financial well-being."}, {"name": "regen·era Rising: A 3 day Global Confluence for Creators of Regenerative Futures", "org": "", "start": "2026-06-20", "end": "2026-07-05", "city": "Hopland", "state": "California", "country": "United States", "format": "Hybrid", "priceStatus": "Priced", "priceMin": 0, "priceMax": 575, "priceNotes": "", "topics": ["Climate & Sustainability", "Social Entrepreneurship", "Storytelling & Creative Impact"], "attendees": ["Social entrepreneurs & founders", "Climate & Sustainability professionals"], "link": "https://www.designscience.studio/regenerarising", "overview": "A multi-day hybrid confluence of immersive experiences, workshops, art, and talks designed to bring together systems thinkers and creators to collaborate at the intersection of design, science, and storytelling to catalyze a regenerative and equitable future."}, {"name": "Points of Light Conference 2026", "org": "Jennifer Sirangelo Vanessa Diamond Kristen Kaplan", "start": "2026-06-22", "end": "2026-06-25", "city": "Washington", "state": "D.C.", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 525, "priceMax": 950, "priceNotes": "", "topics": ["Employee Engagement & Volunteering", "Collective Impact & Cross-Sector Leadership"], "attendees": ["CSR, ESG & Corporate Impact professionals", "Nonprofit & NGO leaders"], "link": "https://www.pointsoflight.org/points-of-light-conference/", "overview": "The world's largest gathering dedicated to volunteerism and civic engagement, bringing together global leaders to share cutting-edge strategies and cross-sector solutions for social impact."}, {"name": "Trellis Impact 26", "org": "Hana Kajimura Joel Makower Ellie Buechner", "start": "2026-06-23", "end": "2026-06-23", "city": "San Francisco", "state": "California", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 1999, "priceMax": 3199, "priceNotes": "", "topics": ["Climate & Sustainability", "CSR, ESG & Corporate Citizenship", "Impact Investing & Finance"], "attendees": ["Climate & Sustainability professionals", "Corporate executives (C-suite)", "Impact investors & VCs"], "link": "https://trellis.net/events/trellis-impact/", "overview": "A sustainability event that unites leaders in climate tech, nature-based solutions, and sustainable finance to accelerate the transition to a resilient and equitable global economy."}, {"name": "Social Impact Summit", "org": "Mark Jones Paula Cowan Kathryn Carey", "start": "2026-07-01", "end": "2026-07-02", "city": "Sydney", "state": "", "country": "Australia", "format": "In-Person", "priceStatus": "Priced", "priceMin": 795, "priceMax": 1595, "priceNotes": "", "topics": ["Social Entrepreneurship", "CSR, ESG & Corporate Citizenship", "Collective Impact & Cross-Sector Leadership"], "attendees": ["Social entrepreneurs & founders", "CSR, ESG & Corporate Impact professionals", "Funders, Foundations & Philanthropists", "Policymakers & Government"], "link": "https://socialimpactsummit.co/", "overview": "A cross-sector summit designed to bring together leaders to share insights, create partnerships, and explore practical solutions for measurable social change and a more inclusive society."}, {"name": "AI for Good Global Summit 2026", "org": "Fred Werner Reinhard Scholl Kseniia Fontaine", "start": "2026-07-07", "end": "2026-07-10", "city": "Geneva", "state": "", "country": "Switzerland", "format": "Hybrid", "priceStatus": "Priced", "priceMin": 0, "priceMax": 6281.8, "priceNotes": "Free virtual option; paid in-person", "topics": ["AI for Good"], "attendees": ["Technologists & Data professionals", "Policymakers & Government", "Academics, Researchers & Students", "Impact investors & VCs"], "link": "https://aiforgood.itu.int/summit26/", "overview": "This event unites UN agencies, tech leaders, and innovators to develop practical AI standards and scalable solutions for global sustainability."}, {"name": "Bridge Conference 2026", "org": "Raeshawn C. DMAW Team AFP-DC Board Team", "start": "2026-07-29", "end": "2026-07-31", "city": "Oxon Hill", "state": "Maryland", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 365, "priceMax": 1155, "priceNotes": "", "topics": ["Fundraising & Development", "Nonprofit Technology & Data"], "attendees": ["Fundraising & Development professionals", "Nonprofit & NGO leaders", "Consultants & Service providers"], "link": "https://2026bridge.eventscribe.net/", "overview": "An annual event that merges the worlds of fundraising, marketing, and technology to provide nonprofit professionals with actionable strategies for donor engagement and organizational growth."}, {"name": "AVPN Global Conference 2026", "org": "Achal Agarwal Lavanya Jayaram Dhun Davar", "start": "2026-08-25", "end": "2026-08-27", "city": "New Delhi", "state": "", "country": "India", "format": "In-Person", "priceStatus": "Priced", "priceMin": 1180, "priceMax": 2640, "priceNotes": "", "topics": ["Impact Investing & Finance", "Philanthropy & Grantmaking"], "attendees": ["Impact investors & VCs", "Funders, Foundations & Philanthropists", "Corporate executives (C-suite)"], "link": "https://avpn.asia/conference/", "overview": "Asia's largest gathering of social investors and impact leaders, the conference serves as a platform to mobilize capital towards a sustainable and inclusive future through cross-sector collaboration and actionable impact investing strategies."}, {"name": "Impact Minds: Connecting Us", "org": "María Carolina Suarez Visbal Andrés Esparza Nossa Juan David Ferreira Marina Puente Pistarini", "start": "2026-09-08", "end": "2026-09-11", "city": "Manaus", "state": "", "country": "Brazil", "format": "In-Person", "priceStatus": "Priced", "priceMin": 930, "priceMax": 1350, "priceNotes": "", "topics": ["Collective Impact & Cross-Sector Leadership", "Social Entrepreneurship"], "attendees": ["Social entrepreneurs & founders", "Nonprofit & NGO leaders"], "link": "https://impactmindsconference.com/", "overview": "This event connects connects global philanthropists and impact investors to align capital and purpose for systemic social and environmental change across Latin America."}, {"name": "ANDE Global Annual Conference 2026", "org": "Devin Chesney Kate Scaife Diaz Ercília Mata Ubisse", "start": "2026-09-10", "end": "2026-09-11", "city": "Johannesburg", "state": "", "country": "South Africa", "format": "In-Person", "priceStatus": "Priced", "priceMin": 450, "priceMax": 1500, "priceNotes": "Estimated from prior year (not yet confirmed)", "topics": ["Social Entrepreneurship", "Impact Investing & Finance"], "attendees": ["Impact investors & VCs", "Funders, Foundations & Philanthropists", "Social entrepreneurs & founders", "Policymakers & Government"], "link": "https://andeglobal.org/event/global-annual-conference-2026/", "overview": "This event will focus on the practical execution of capital, procurement, and policy to bridge the gap between systemic potential and real-world impact for entrepreneurs in Africa's \"next economy.\""}, {"name": "2026 ACCP Annual Conference", "org": "Andrea Wood Christina Fagan Barbara Stewart", "start": "2026-09-14", "end": "2026-09-16", "city": "Boston", "state": "Massachusetts", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 2550, "priceMax": 3850, "priceNotes": "", "topics": ["CSR, ESG & Corporate Citizenship", "Philanthropy & Grantmaking"], "attendees": ["CSR, ESG & Corporate Impact professionals", "Funders, Foundations & Philanthropists", "Corporate executives (C-suite)"], "link": "https://accp.org/conference/", "overview": "An educational and networking event for corporate social impact professionals to explore current industry trends, share actionable strategies, and strengthen their CSR and ESG initiatives."}, {"name": "Business of Impact", "org": "Angela W. Markus Freiburg Leslie Johnston", "start": "2026-09-15", "end": "2026-09-16", "city": "TBA", "state": "", "country": "Portugal", "format": "In-Person", "priceStatus": "Priced", "priceMin": 757.9, "priceMax": 1107.7, "priceNotes": "Estimated from prior year (not yet confirmed)", "topics": ["Impact Investing & Finance", "CSR, ESG & Corporate Citizenship"], "attendees": ["Impact investors & VCs", "Corporate executives (C-suite)"], "link": "https://www.impacteurope.net/events/business-impact", "overview": "This event positions impact investing as a strategic economic opportunity, demonstrating how organizations can strengthen business models and gain a competitive edge through purposeful capital mobilization."}, {"name": "2026 Concordia Annual Summit", "org": "Matthew Swift Nicholas Logothetis", "start": "2026-09-20", "end": "2026-09-23", "city": "New York City", "state": "New York", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 800, "priceMax": 2000, "priceNotes": "", "topics": ["Collective Impact & Cross-Sector Leadership", "Impact Investing & Finance"], "attendees": ["Policymakers & Government", "Corporate executives (C-suite)", "Nonprofit & NGO leaders"], "link": "https://concordia.net/event/2026-concordia-annual-summit/", "overview": "A nonpartisan global affairs forum that convenes world leaders across the public, private, and nonprofit sectors to foster cross-sector partnerships for social impact."}, {"name": "Climate Week NYC", "org": "Helen Clarkson Angela Barranco Adam Lake", "start": "2026-09-20", "end": "2026-09-27", "city": "New York City", "state": "New York", "country": "United States", "format": "Hybrid", "priceStatus": "Priced", "priceMin": 0, "priceMax": 1300, "priceNotes": "", "topics": ["Climate & Sustainability"], "attendees": ["Climate & Sustainability professionals", "Policymakers & Government", "Corporate executives (C-suite)", "Funders, Foundations & Philanthropists"], "link": "https://www.climateweeknyc.org/", "overview": "The largest annual climate event of its kind, bringing together international leaders from business, government, and society to accelerate climate action and showcase solutions alongside the UN General Assembly."}, {"name": "NIO Summit", "org": "Tim Kachuriak Jeff Giddens Courtney Kincaid", "start": "2026-09-22", "end": "2026-09-24", "city": "Fort Worth", "state": "Texas", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 795, "priceMax": 1995, "priceNotes": "", "topics": ["Fundraising & Development"], "attendees": ["Fundraising & Development professionals", "Nonprofit & NGO leaders"], "link": "https://www.niosummit.com/", "overview": "A high-energy fundraising conference that uses data-driven insights and real-world testing to help nonprofits optimize their digital donor acquisition and retention strategies."}, {"name": "The Annual Tech Forward Conference", "org": "Patrick Callihan Elizabeth Levy Linda Widdop", "start": "2026-09-27", "end": "2026-09-29", "city": "Kansas City", "state": "Missouri", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 595, "priceMax": 995, "priceNotes": "", "topics": ["Nonprofit Technology & Data"], "attendees": ["Technologists & Data professionals", "Nonprofit & NGO leaders"], "link": "https://techimpact.org/techforward", "overview": "A conference focused on how nonprofit organizations can leverage innovative technologies like AI, data analytics, and cybersecurity to increase their social impact."}, {"name": "bbcon 2026", "org": "Todd Lant Carrie Cobb Catherine LaCour", "start": "2026-09-29", "end": "2026-10-01", "city": "Columbus", "state": "Ohio", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 1298, "priceMax": 2077, "priceNotes": "", "topics": ["Nonprofit Technology & Data", "Fundraising & Development"], "attendees": ["Nonprofit & NGO leaders", "Fundraising & Development professionals", "Technologists & Data professionals"], "link": "https://www.bbconference.com/2026/homepage", "overview": "A tech conference for the social impact sector, bringing together changemakers and Blackbaud experts to explore innovations in AI and technology that drive mission success."}, {"name": "AHP Annual International Conference 2026", "org": "Alice Ayres Preston W. Crystal Hinson Miller", "start": "2026-10-07", "end": "2026-10-09", "city": "Nashville", "state": "Tennessee", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 1019, "priceMax": 1939, "priceNotes": "", "topics": ["Fundraising & Development", "Philanthropy & Grantmaking"], "attendees": ["Fundraising & Development professionals", "Funders, Foundations & Philanthropists"], "link": "https://www.ahp.org/events/internationalconference", "overview": "The world's largest gathering of healthcare fundraising professionals, focused on sharing innovative strategies, evidence-based practices, and networking to advance healthcare philanthropy."}, {"name": "SOCAP26", "org": "Robert Munson Tova Lobatz Sarah Sterling", "start": "2026-10-12", "end": "2026-10-14", "city": "Chicago", "state": "Illinois", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 999, "priceMax": 1999, "priceNotes": "", "topics": ["Impact Investing & Finance", "Social Entrepreneurship", "Collective Impact & Cross-Sector Leadership"], "attendees": ["Impact investors & VCs", "Social entrepreneurs & founders", "Funders, Foundations & Philanthropists", "Nonprofit & NGO leaders"], "link": "https://socapglobal.com/event-socap-26/", "overview": "A global convening focused on accelerating market-based solutions by facilitating the strategic deployment of capital toward the world’s most pressing social and environmental challenges."}, {"name": "Independent Sector’s National Summit 2026", "org": "Akilah Watkins Jeff Moore Rick Robinson", "start": "2026-10-13", "end": "2026-10-16", "city": "Phoenix", "state": "Arizona", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 645, "priceMax": 1495, "priceNotes": "", "topics": ["Collective Impact & Cross-Sector Leadership", "Philanthropy & Grantmaking"], "attendees": ["Nonprofit & NGO leaders", "Funders, Foundations & Philanthropists", "CSR, ESG & Corporate Impact professionals"], "link": "https://summit.independentsector.org/", "overview": "A national gathering that brings together leaders across the charitable sector to co-create a more equitable and resilient future through shared leadership and collective action."}, {"name": "The Gap In Between", "org": "Margarita Albors Marta del Castillo", "start": "2026-10-20", "end": "2026-10-20", "city": "Valencia", "state": "", "country": "Spain", "format": "In-Person", "priceStatus": "Priced", "priceMin": 34.98, "priceMax": 58.3, "priceNotes": "", "topics": ["Social Entrepreneurship", "Impact Investing & Finance", "Climate & Sustainability"], "attendees": ["Social entrepreneurs & founders", "Impact investors & VCs", "Corporate executives (C-suite)"], "link": "https://thegapinbetween.com/", "overview": "A global impact platform that convenes cross-sector leaders —including corporations, startups, and investors—to co-create collaborative solutions for the world’s most pressing social and environmental challenges."}, {"name": "2026 Lead with Impact Summit", "org": "J. J. Ament Christian Carlsen Lexi Muller", "start": "2026-11-19", "end": "2026-11-19", "city": "Denver", "state": "Colorado", "country": "United States", "format": "In-Person", "priceStatus": "TBD", "priceMin": null, "priceMax": null, "priceNotes": "", "topics": ["CSR, ESG & Corporate Citizenship", "DEI & Inclusion", "Employee Engagement & Volunteering"], "attendees": ["CSR, ESG & Corporate Impact professionals", "Corporate executives (C-suite)"], "link": "https://denverchamber.org/events/2026-lead-with-impact-summit/", "overview": "A summit exploring how civic engagement, inclusive leadership, and corporate social responsibility come together to help professionals become more impactful and culturally aware leaders."}, {"name": "Impact + Profit Conference", "org": "Robert Rippberger William Nix Debora Freitas Lopez Uttara Bharath Kumar", "start": "2026-12-03", "end": "2026-12-04", "city": "Los Angeles", "state": "California", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 125, "priceMax": 375, "priceNotes": "", "topics": ["Social Entrepreneurship", "Storytelling & Creative Impact"], "attendees": ["Social entrepreneurs & founders", "Nonprofit & NGO leaders"], "link": "https://conference.siesociety.org/", "overview": "A gathering designed to bridge the gap between entertainment and social change, teaching professionals how to implement a \"double bottom line\" to achieve both measurable social impact and financial profitability."}, {"name": "2027 Nonprofit Technology Conference", "org": "Amy Sample Ward Ash Shepherd Eileigh Doineau", "start": "2027-03-23", "end": "2027-03-26", "city": "Portland", "state": "Oregon", "country": "United States", "format": "Hybrid", "priceStatus": "Priced", "priceMin": 200, "priceMax": 925, "priceNotes": "", "topics": ["Nonprofit Technology & Data", "Fundraising & Development"], "attendees": ["Nonprofit & NGO leaders", "Technologists & Data professionals", "Fundraising & Development professionals"], "link": "https://www.nten.org/gather/ntc", "overview": "An annual event for the nonprofit technology community, designed to help professionals build technical capacity, share best practices, and collaborate on using technology for social impact."}, {"name": "MIE 2026 National Conference", "org": "James Wahls Dan Goldberg Sophia Brown", "start": "2026-04-27", "end": "2026-04-29", "city": "Atlanta", "state": "Georgia", "country": "United States", "format": "In-Person", "priceStatus": "Priced", "priceMin": 1795, "priceMax": 2595, "priceNotes": "", "topics": ["Impact Investing & Finance", "Philanthropy & Grantmaking"], "attendees": ["Funders, Foundations & Philanthropists", "Impact investors & VCs"], "link": "https://missioninvestors.org/events/national-conference-2026", "overview": "A gathering for philanthropic leaders to engage in plenary discussions, peer learning, and site visits focused on shaping the future of impact investing."}, {"name": "NetHope Global Summit 2026", "org": "Dianna Langley Jean-Louis Ecochard Esther Grieder", "start": "2026-10-26", "end": "2026-11-03", "city": "Amsterdam", "state": "", "country": "Netherlands", "format": "Hybrid", "priceStatus": "Priced", "priceMin": 0, "priceMax": 8400, "priceNotes": "Free virtual option; paid in-person", "topics": ["Nonprofit Technology & Data", "AI for Good"], "attendees": ["Technologists & Data professionals", "Nonprofit & NGO leaders"], "link": "https://nethope.org/global-summit/", "overview": "A global gathering for digital leaders in the humanitarian and conservation sectors to collaborate on technology-driven solutions for the world’s most pressing challenges."}, {"name": "PEAK 2026 ST. LOUIS", "org": "Kelsey Andersen Monica Thorns Sara Richman Sanders", "start": "2026-03-25", "end": "2026-04-23", "city": "St. Louis", "state": "Missouri", "country": "United States", "format": "Hybrid", "priceStatus": "Priced", "priceMin": 299, "priceMax": 1950, "priceNotes": "", "topics": ["Philanthropy & Grantmaking"], "attendees": ["Funders, Foundations & Philanthropists", "Consultants & Service providers"], "link": "https://www.peakgrantmaking.org/peak2026-stl/", "overview": "The conference, themed \"Rooted in Purpose, Growing Together,\" celebrates PEAK’s 30th anniversary by exploring innovations in data, technology, and equitable grantmaking practices to better serve communities."}, {"name": "2026 Leadership for Social Impact Forum", "org": "Fiona Macaulay", "start": "2026-05-06", "end": "2026-05-13", "city": "Washington", "state": "D.C.", "country": "United States", "format": "Hybrid", "priceStatus": "Priced", "priceMin": 595, "priceMax": 1163, "priceNotes": "", "topics": ["Collective Impact & Cross-Sector Leadership", "DEI & Inclusion"], "attendees": ["Nonprofit & NGO leaders", "Corporate executives (C-suite)"], "link": "https://www.wildleadershipforum.com/", "overview": "A global leadership development forum designed to increase the power, influence, and connections of leaders tackling the world’s most complex social challenges through interactive workshops, peer networking, and mentorship."}];
+
+const TOPIC_COLORS = {
+  "CSR, ESG & Corporate Citizenship":"#30523a","Climate & Sustainability":"#2d5a3d",
+  "Impact Investing & Finance":"#c1a55f","Philanthropy & Grantmaking":"#b07c5a",
+  "Fundraising & Development":"#7a6a4a","Nonprofit Technology & Data":"#4a7d9a",
+  "AI for Good":"#6a8a5a","Social Entrepreneurship":"#72997d",
+  "Employee Engagement & Volunteering":"#4d7060","DEI & Inclusion":"#8a6d8a",
+  "Collective Impact & Cross-Sector Leadership":"#8d4f47","Storytelling & Creative Impact":"#b89a6a"
+};
+
+
+// Who hosts each conference, derived from its official site (replaces personal names)
+const HOST_MAP = {
+  "luc.edu":"Loyola University Chicago (Baumhart Center)","pac.org":"Public Affairs Council",
+  "trellis.net":"Trellis Group","ringcentral.com":"Elevate","goodera.com":"Goodera",
+  "aws.amazon.com":"Amazon Web Services (AWS)","impactinvestmentsummit.com":"Impact Investment Summit",
+  "changenow.world":"ChangeNOW","blackbaud.swoogo.com":"Blackbaud (YourCause)",
+  "goodtechtogether.org":"Good Tech Together","thesocialimpact.co":"The Social Impact Co.",
+  "laclimateweek.com":"LA Climate Week","collectiveimpactforum.org":"Collective Impact Forum",
+  "doublethedonation.com":"Double the Donation","sheshapes.ai":"She Shapes AI",
+  "sfclimateweek.org":"SF Climate Week","engageforgood.com":"Engage for Good",
+  "skoll.org":"Skoll Foundation","conference-board.org":"The Conference Board",
+  "bostonclimateweek.org":"Boston Climate Week","cof.org":"Council on Foundations",
+  "reutersevents.com":"Reuters Events","greaterpurpose":"Greater Purpose","dileaders.com":"d&i Leaders",
+  "socialimpactworld.com":"Social Impact World","katapultfuturefest.com":"Katapult",
+  "geofunders.org":"Grantmakers for Effective Organizations (GEO)",
+  "hollywoodclimatesummit.com":"Hollywood Climate Summit","benevity.com":"Benevity",
+  "socialinnovation.com":"Social Innovation Summit","sustainablebrands.com":"Sustainable Brands",
+  "data.org":"data.org","designscience.studio":"Design Science Studio","pointsoflight.org":"Points of Light",
+  "socialimpactsummit.co":"Social Impact Summit","aiforgood.itu.int":"ITU (United Nations)",
+  "eventscribe.net":"Bridge Conference (DMAW & AFP-DC)","avpn.asia":"AVPN",
+  "impactmindsconference.com":"Latimpacto","andeglobal.org":"Aspen Network of Development Entrepreneurs (ANDE)",
+  "accp.org":"Assoc. of Corporate Citizenship Professionals (ACCP)","impacteurope.net":"Impact Europe",
+  "concordia.net":"Concordia","climateweeknyc.org":"Climate Group","niosummit.com":"NextAfter",
+  "techimpact.org":"Tech Impact","bbconference.com":"Blackbaud",
+  "ahp.org":"Assoc. for Healthcare Philanthropy (AHP)","socapglobal.com":"SOCAP",
+  "independentsector.org":"Independent Sector","thegapinbetween.com":"The Gap In Between",
+  "denverchamber.org":"Denver Metro Chamber","siesociety.org":"SIE Society","nten.org":"NTEN",
+  "missioninvestors.org":"Mission Investors Exchange","nethope.org":"NetHope",
+  "peakgrantmaking.org":"PEAK Grantmaking","wildleadershipforum.com":"WILD Network"
+};
+function hostFromLink(link){
+  const l=(link||"").toLowerCase();
+  for(const k in HOST_MAP){ if(l.includes(k)) return HOST_MAP[k]; }
+  const m=l.match(/https?:\/\/(?:www\.)?([^\/]+)/);
+  if(m){ const p=m[1].split("."); const core=p.length>=2?p[p.length-2]:p[0]; return core.charAt(0).toUpperCase()+core.slice(1); }
+  return "";
+}
+
+let state = {q:"",country:new Set(),city:new Set(),format:new Set(),topic:new Set(),
+  attendee:new Set(),priceMin:0,priceMax:0,includeUnpriced:true,upcoming:true,from:"",to:""};
+let PRICE_CAP = 0;
+
+const $ = s => document.querySelector(s);
+const parseISO = s => { if(!s) return null; const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); };
+const today = () => { const d=new Date(); d.setHours(0,0,0,0); return d; };
+
+function fmtRange(s,e){
+  const ds=parseISO(s); if(!ds) return "";
+  const de=parseISO(e);
+  if(!de || s===e) return ds.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+  const left=ds.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+  const right=de.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+  return left+" \u2013 "+right;
+}
+function money(n){ return "$"+Math.round(n).toLocaleString("en-US"); }
+function fmtPrice(c){
+  if(c.priceStatus==="Free") return "Free";
+  if(c.priceStatus==="Application or invite only") return "Application / invite only";
+  if(c.priceStatus==="TBD") return "Price TBD";
+  if(c.priceStatus==="Priced"){
+    const lo=c.priceMin, hi=c.priceMax;
+    if(lo==null && hi==null) return "Price TBD";
+    if(lo===hi) return money(lo);
+    if(lo===0) return "Free \u2013 "+money(hi);
+    return money(lo)+" \u2013 "+money(hi);
+  }
+  return "Price TBD";
+}
+function fmtClass(f){ return f==="Virtual"?"f-virtual":f==="Hybrid"?"f-hybrid":"f-inperson"; }
+
+function uniqueSorted(key){
+  const vals=new Set();
+  CONF_DATA.forEach(c=>{ const v=c[key]; if(Array.isArray(v)) v.forEach(x=>x&&vals.add(x)); else if(v) vals.add(v); });
+  return [...vals].sort((a,b)=> a==="Online"?1 : b==="Online"?-1 : a.localeCompare(b));
+}
+
+function buildChips(containerId,values,setRef,filterKey){
+  const c=$("#"+containerId);
+  c.innerHTML=values.map(v=>`<button class="option" data-val="${v.replace(/"/g,"&quot;")}">${v}</button>`).join("");
+  c.querySelectorAll("[data-val]").forEach(b=>{
+    b.addEventListener("click",()=>{
+      const v=b.dataset.val;
+      if(setRef.has(v)){setRef.delete(v);b.classList.remove("selected");}
+      else{setRef.add(v);b.classList.add("selected");}
+      updateCount(filterKey,setRef.size); render();
+    });
+  });
+}
+
+function updateCount(key,n){
+  const t=document.querySelector(`[data-filter="${key}"]`); if(!t) return;
+  const el=t.querySelector(".filter-count");
+  if(n>0){el.textContent=n;el.style.display="inline-block";t.classList.add("active","has-selections");}
+  else{el.style.display="none";t.classList.remove("active","has-selections");}
+}
+
+function setupTriggers(){
+  const trigs=document.querySelectorAll(".filter-trigger");
+  const panels=document.querySelectorAll(".filter-panel");
+  trigs.forEach(t=>t.addEventListener("click",()=>{
+    const target=t.dataset.filter, wasOpen=t.classList.contains("open");
+    trigs.forEach(x=>x.classList.remove("open")); panels.forEach(p=>p.classList.remove("open"));
+    if(!wasOpen){t.classList.add("open"); document.querySelector(`[data-panel="${target}"]`).classList.add("open");}
+  }));
+  document.addEventListener("click",e=>{
+    if(!e.target.closest(".controls")){trigs.forEach(x=>x.classList.remove("open"));panels.forEach(p=>p.classList.remove("open"));}
+  });
+}
+
+// Price slider
+function initPrice(){
+  const prices=CONF_DATA.filter(c=>typeof c.priceMax==="number").map(c=>c.priceMax);
+  PRICE_CAP=Math.ceil(Math.max(...prices)/500)*500;
+  state.priceMin=0; state.priceMax=PRICE_CAP;
+  const mn=$("#price-min"), mx=$("#price-max");
+  mn.max=PRICE_CAP; mx.max=PRICE_CAP; mn.value=0; mx.value=PRICE_CAP; mn.step=50; mx.step=50;
+  const upd=()=>{
+    let lo=+mn.value, hi=+mx.value;
+    if(lo>hi-50){ if(event && event.target===mn){lo=hi-50;mn.value=lo;} else {hi=lo+50;mx.value=hi;} }
+    state.priceMin=lo; state.priceMax=hi;
+    $("#price-range-fill").style.left=(lo/PRICE_CAP*100)+"%";
+    $("#price-range-fill").style.right=(100-hi/PRICE_CAP*100)+"%";
+    $("#price-readout").textContent=money(lo)+(hi>=PRICE_CAP?" \u2013 "+money(hi)+"+":" \u2013 "+money(hi));
+    const changed = lo>0 || hi<PRICE_CAP;
+    updateCount("price",changed?1:0);
+    render();
+  };
+  mn.addEventListener("input",upd); mx.addEventListener("input",upd);
+  $("#include-unpriced").addEventListener("change",e=>{state.includeUnpriced=e.target.checked;render();});
+  upd();
+  updateCount("price",0);
+}
+
+function setupDates(){
+  $("#date-from").addEventListener("change",e=>{state.from=e.target.value;syncDateCount();render();});
+  $("#date-to").addEventListener("change",e=>{state.to=e.target.value;syncDateCount();render();});
+  document.querySelectorAll("[data-preset]").forEach(b=>b.addEventListener("click",()=>{
+    const months=+b.dataset.preset; const f=today(); const t=new Date(f); t.setMonth(t.getMonth()+months);
+    const iso=d=>d.toISOString().slice(0,10);
+    state.from=iso(f); state.to=iso(t); $("#date-from").value=state.from; $("#date-to").value=state.to;
+    document.querySelectorAll("[data-preset]").forEach(x=>x.classList.remove("selected")); b.classList.add("selected");
+    syncDateCount(); render();
+  }));
+  $("#clear-dates").addEventListener("click",()=>{
+    state.from="";state.to="";$("#date-from").value="";$("#date-to").value="";
+    document.querySelectorAll("[data-preset]").forEach(x=>x.classList.remove("selected"));
+    syncDateCount(); render();
+  });
+}
+function syncDateCount(){ updateCount("date",(state.from||state.to)?1:0); }
+
+function passesFilters(c){
+  const td=today();
+  if(state.upcoming){ const de=parseISO(c.end)||parseISO(c.start); if(de && de<td) return false; }
+  if(state.from){ const de=parseISO(c.end)||parseISO(c.start); if(de && de<parseISO(state.from)) return false; }
+  if(state.to){ const ds=parseISO(c.start); if(ds && ds>parseISO(state.to)) return false; }
+  if(state.country.size && !state.country.has(c.country)) return false;
+  if(state.city.size && !state.city.has(c.city)) return false;
+  if(state.format.size){
+    const f=c.format;
+    const ok=(state.format.has("Virtual")&&(f==="Virtual"||f==="Hybrid"))
+           ||(state.format.has("In-Person")&&(f==="In-Person"||f==="Hybrid"))
+           ||(state.format.has("Hybrid")&&f==="Hybrid");
+    if(!ok) return false;
+  }
+  if(state.topic.size && !c.topics.some(t=>state.topic.has(t))) return false;
+  if(state.attendee.size && !c.attendees.some(a=>state.attendee.has(a))) return false;
+  // price
+  const priced = typeof c.priceMin==="number" && typeof c.priceMax==="number";
+  if(priced){
+    if(c.priceMax<state.priceMin || c.priceMin>state.priceMax) return false;
+  } else {
+    if(!state.includeUnpriced) return false;
+  }
+  if(state.q){
+    const hay=[c.name,c.org,c.city,c.country,c.overview,c.topics.join(" "),c.attendees.join(" ")].join(" ").toLowerCase();
+    if(!hay.includes(state.q)) return false;
+  }
+  return true;
+}
+
+function firstSentence(t){ t=(t||"").trim(); const m=t.match(/^.*?[.!?](\s|$)/); return (m?m[0]:t).trim(); }
+const BAR_COLORS=["var(--green-dark)","var(--green-sage)","var(--gold)"];
+function card(c,i){
+  const color=BAR_COLORS[(i||0)%3];
+  const host=hostFromLink(c.link);
+  // Location: US shows "City, State" with the country underneath; non-US shows "City, Country"
+  let locTop="", locSub="";
+  if(c.format==="Virtual"){ locTop="Online"; }
+  else if((c.country||"").trim()==="United States"){
+    locTop=[c.city,c.state].filter(x=>x && x!=="TBA").join(", ") || (c.city==="TBA"?"Location TBA":"");
+    locSub="United States";
+  } else {
+    locTop=[c.city,c.country].filter(x=>x && x!=="TBA").join(", ") || (c.city==="TBA"?"Location TBA":"");
+  }
+  const aud = c.attendees.join(" \u00b7 ");
+  const cal=`<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>`;
+  const pin=`<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+  return `<div class="card" style="--bar:${color}">
+    <div class="card-bar"></div>
+    <div class="card-body">
+      <div class="card-meta-top">
+        <span class="card-topics">${c.topics.join(" \u00b7 ")}</span>
+        <span class="card-format ${fmtClass(c.format)}">${c.format||""}</span>
+      </div>
+      <div class="card-title">${c.name}</div>
+      ${host?`<div class="card-org">${host}</div>`:""}
+      <div class="card-meta">
+        <span>${cal}${fmtRange(c.start,c.end)}</span>
+        ${locTop?`<span>${pin}${locTop}</span>`:""}
+        ${locSub?`<span style="padding-left:18px">${locSub}</span>`:""}
+      </div>
+      ${c.overview?`<div class="card-summary">${firstSentence(c.overview)}</div>`:""}
+      <div class="card-price">${fmtPrice(c)}${c.priceNotes?`<span class="note">${c.priceNotes}</span>`:""}</div>
+      ${aud?`<div class="card-audience"><b>Who it's for</b>${aud}</div>`:""}
+      ${c.link?`<a class="card-link" href="${c.link}" target="_blank" rel="noopener">Visit site &rarr;</a>`:""}
+    </div>
+  </div>`;
+}
+
+function render(){
+  const list=CONF_DATA.filter(passesFilters).sort((a,b)=>(parseISO(a.start)||0)-(parseISO(b.start)||0));
+  const grid=$("#grid"), bar=$("#results-bar"), st=$("#state");
+  if(!list.length){ grid.innerHTML=""; bar.style.display="none"; st.style.display="block"; st.innerHTML="<p>No conferences match your filters.</p>"; requestAnimationFrame(postHeight); return; }
+  st.style.display="none"; bar.style.display="flex";
+  $("#count-label").innerHTML=`<strong>${list.length}</strong> conference${list.length!==1?"s":""}`;
+  grid.innerHTML=list.map((c,i)=>card(c,i)).join("");
+  requestAnimationFrame(postHeight);
+}
+
+
+// ---- Load data from the published Google Sheet CSV ----
+function splitLine(line){const r=[];let c="",q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(q&&line[i+1]==='"'){c+='"';i++;}else q=!q;}else if(ch===','&&!q){r.push(c);c="";}else c+=ch;}r.push(c);return r;}
+function parseCSV(text){const lines=text.trim().split(/\r?\n/);const headers=splitLine(lines[0]).map(h=>h.trim());return lines.slice(1).map(line=>{const v=splitLine(line);const o={};headers.forEach((h,i)=>o[h]=(v[i]||"").trim());return o;});}
+function numOrNull(v){const n=parseFloat(String(v).replace(/[^0-9.\-]/g,""));return isNaN(n)?null:n;}
+function mapRow(r){return {
+  name:r["Name"]||"", org:r["Organizers"]||"",
+  start:r["Date Start (ISO)"]||"", end:r["Date End (ISO)"]||"",
+  city:r["City"]||"", state:r["State/Province"]||"", country:r["Country"]||"",
+  format:r["Format"]||"", priceStatus:r["Price Status"]||"",
+  priceMin:numOrNull(r["Price Min (USD)"]), priceMax:numOrNull(r["Price Max (USD)"]),
+  priceNotes:r["Price Notes"]||"",
+  topics:(r["Topics"]||"").split(";").map(s=>s.trim()).filter(Boolean),
+  attendees:(r["Attendee Types"]||"").split(";").map(s=>s.trim()).filter(Boolean),
+  link:(r["Conference Link"]||"").replace(/\s/g,""), overview:r["Overview"]||"",
+  active:(r["Active"]||"").trim().toLowerCase()
+};}
+async function loadConferences(){
+  const st=$("#state"); st.style.display="block"; st.innerHTML="<p>Loading conferences...</p>";
+  if(CSV_URL==="PASTE_YOUR_PUBLISHED_CSV_URL_HERE"){ CONF_DATA=CONF_FALLBACK; init(); render(); return; }
+  try{
+    const res=await fetch(CSV_URL+(CSV_URL.includes("?")?"&":"?")+"t="+Date.now());
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    CONF_DATA=parseCSV(await res.text()).map(mapRow).filter(c=>c.active==="yes"&&c.name);
+    if(!CONF_DATA.length) throw new Error("0 usable rows (is the Sheet shared publicly?)");
+    init(); render();
+  }catch(e){
+    console.warn("Live data load failed, using built-in copy:", e);
+    CONF_DATA=CONF_FALLBACK; init(); render();
+  }
+}
+
+function init(){
+setupTriggers();
+buildChips("country-options",uniqueSorted("country"),state.country,"country");
+buildChips("city-options",uniqueSorted("city"),state.city,"city");
+buildChips("format-options",["In-Person","Virtual","Hybrid"],state.format,"format");
+buildChips("topic-options",uniqueSorted("topics"),state.topic,"topic");
+buildChips("attendee-options",uniqueSorted("attendees"),state.attendee,"attendee");
+initPrice();
+setupDates();
+$("#search").addEventListener("input",e=>{state.q=e.target.value.toLowerCase();render();});
+$("#upcoming-toggle").addEventListener("change",e=>{state.upcoming=e.target.checked;render();});
+$("#clear-all").addEventListener("click",()=>{
+  state.q="";["country","city","format","topic","attendee"].forEach(k=>state[k].clear());
+  state.from="";state.to="";state.includeUnpriced=true;
+  $("#search").value="";$("#date-from").value="";$("#date-to").value="";$("#include-unpriced").checked=true;
+  $("#price-min").value=0;$("#price-max").value=PRICE_CAP;state.priceMin=0;state.priceMax=PRICE_CAP;
+  $("#price-range-fill").style.left="0%";$("#price-range-fill").style.right="0%";
+  $("#price-readout").textContent=money(0)+" \u2013 "+money(PRICE_CAP)+"+";
+  document.querySelectorAll(".option").forEach(o=>o.classList.remove("selected"));
+  document.querySelectorAll(".filter-trigger").forEach(t=>{t.classList.remove("active","has-selections","open");t.querySelector(".filter-count").style.display="none";});
+  document.querySelectorAll(".filter-panel").forEach(p=>p.classList.remove("open"));
+  render();
+});
+  render();
+}
+
+loadConferences();
+
+// Showit iframe height passing (robust: handles mobile stacking and late font reflow)
+function postHeight(){
+  if(window.parent && window.parent!==window){
+    var hgt=Math.max(document.body.scrollHeight, document.body.offsetHeight,
+                     document.documentElement.scrollHeight, document.documentElement.offsetHeight);
+    window.parent.postMessage({type:"juniper-conferences-height", height:hgt}, "*");
+  }
+}
+window.addEventListener("load",postHeight);
+window.addEventListener("resize",postHeight);
+document.addEventListener("DOMContentLoaded",postHeight);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(postHeight);
+if(typeof ResizeObserver!=="undefined") new ResizeObserver(postHeight).observe(document.body); else setInterval(postHeight,500);
+[150,400,800,1500,3000].forEach(function(t){ setTimeout(postHeight,t); });
+</script>
+</body>
+</html>
