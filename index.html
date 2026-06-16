@@ -129,6 +129,7 @@
     </div>
     <div class="filter-triggers">
       <button class="filter-trigger" data-filter="date">Dates <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
+      <button class="filter-trigger" data-filter="month">Month <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
       <button class="filter-trigger" data-filter="country">Country <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
       <button class="filter-trigger" data-filter="city">City <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
       <button class="filter-trigger" data-filter="format">Format <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
@@ -152,6 +153,7 @@
       </div>
     </div>
   </div>
+  <div class="filter-panel" data-panel="month"><div class="panel-options" id="month-options"></div></div>
   <div class="filter-panel" data-panel="country"><div class="panel-options" id="country-options"></div></div>
   <div class="filter-panel" data-panel="city"><div class="panel-options" id="city-options"></div></div>
   <div class="filter-panel" data-panel="format"><div class="panel-options" id="format-options"></div></div>
@@ -233,7 +235,7 @@ function cleanSponsor(s){
   return first.replace(/\s*\n\s*/g," ").replace(/\s+/g," ").trim();
 }
 
-let state = {q:"",country:new Set(),city:new Set(),format:new Set(),topic:new Set(),
+let state = {q:"",month:new Set(),country:new Set(),city:new Set(),format:new Set(),topic:new Set(),
   attendee:new Set(),priceMin:0,priceMax:0,includeUnpriced:true,upcoming:true,from:"",to:""};
 let PRICE_CAP = 0;
 
@@ -279,9 +281,28 @@ function uniqueSorted(key){
   return [...vals].sort((a,b)=> a==="Online"?1 : b==="Online"?-1 : a.localeCompare(b));
 }
 
-function buildChips(containerId,values,setRef,filterKey){
+// Year-months ("2026-06") covered by a conference, from its start through end date
+function confMonths(c){
+  const ds=parseISO(c.start); if(!ds) return [];
+  const de=parseISO(c.end)||ds;
+  const out=[]; let cur=new Date(ds.getFullYear(),ds.getMonth(),1);
+  const endM=new Date(de.getFullYear(),de.getMonth(),1);
+  while(cur<=endM){ out.push(cur.getFullYear()+"-"+String(cur.getMonth()+1).padStart(2,"0")); cur.setMonth(cur.getMonth()+1); }
+  return out;
+}
+function monthOptions(){
+  const set=new Set();
+  CONF_DATA.forEach(c=>confMonths(c).forEach(m=>set.add(m)));
+  return [...set].sort();
+}
+function monthLabel(ym){
+  const p=ym.split("-").map(Number);
+  return new Date(p[0],p[1]-1,1).toLocaleDateString("en-US",{month:"short",year:"numeric"});
+}
+
+function buildChips(containerId,values,setRef,filterKey,labelFn){
   const c=$("#"+containerId);
-  c.innerHTML=values.map(v=>`<button class="option" data-val="${v.replace(/"/g,"&quot;")}">${v}</button>`).join("");
+  c.innerHTML=values.map(v=>`<button class="option" data-val="${v.replace(/"/g,"&quot;")}">${labelFn?labelFn(v):v}</button>`).join("");
   c.querySelectorAll("[data-val]").forEach(b=>{
     b.addEventListener("click",()=>{
       const v=b.dataset.val;
@@ -359,6 +380,7 @@ function passesFilters(c){
   if(state.upcoming){ const de=parseISO(c.end)||parseISO(c.start); if(de && de<td) return false; }
   if(state.from){ const de=parseISO(c.end)||parseISO(c.start); if(de && de<parseISO(state.from)) return false; }
   if(state.to){ const ds=parseISO(c.start); if(ds && ds>parseISO(state.to)) return false; }
+  if(state.month.size && !confMonths(c).some(m=>state.month.has(m))) return false;
   if(state.country.size && !state.country.has(c.country)) return false;
   if(state.city.size && !state.city.has(c.city)) return false;
   if(state.format.size){
@@ -489,6 +511,7 @@ async function loadConferences(){
 
 function init(){
 setupTriggers();
+buildChips("month-options",monthOptions(),state.month,"month",monthLabel);
 buildChips("country-options",uniqueSorted("country"),state.country,"country");
 buildChips("city-options",uniqueSorted("city"),state.city,"city");
 buildChips("format-options",["In-Person","Virtual","Hybrid"],state.format,"format");
@@ -499,7 +522,7 @@ setupDates();
 $("#search").addEventListener("input",e=>{state.q=e.target.value.toLowerCase();render();});
 $("#upcoming-toggle").addEventListener("change",e=>{state.upcoming=e.target.checked;render();});
 $("#clear-all").addEventListener("click",()=>{
-  state.q="";["country","city","format","topic","attendee"].forEach(k=>state[k].clear());
+  state.q="";["month","country","city","format","topic","attendee"].forEach(k=>state[k].clear());
   state.from="";state.to="";state.includeUnpriced=true;
   $("#search").value="";$("#date-from").value="";$("#date-to").value="";$("#include-unpriced").checked=true;
   $("#price-min").value=0;$("#price-max").value=PRICE_CAP;state.priceMin=0;state.priceMax=PRICE_CAP;
