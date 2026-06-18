@@ -111,11 +111,10 @@
     .filter-panel{padding:14px 20px;}
     .main{padding:20px 20px 48px;}
     .grid{grid-template-columns:1fr;}
-    /* Keep filters on a single horizontal row that scrolls, instead of wrapping into stacked rows */
-    .search-wrap{max-width:none;}
-    .filter-triggers{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;}
-    .filter-triggers::-webkit-scrollbar{display:none;}
-    .filter-trigger,.toggle-upcoming,.clear-btn{flex:0 0 auto;}
+    /* Put search on its own full-width row, then let the filter buttons fill the width and flow
+       horizontally (wrapping into rows) instead of being squeezed into a narrow vertical column */
+    .search-wrap{flex:1 1 100%;max-width:none;}
+    .filter-triggers{flex:1 1 100%;flex-wrap:wrap;}
   }
 </style>
 </head>
