@@ -295,8 +295,10 @@ function confMonths(c){
   return out;
 }
 function monthOptions(){
+  const now=today();
+  const curYM=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
   const set=new Set();
-  CONF_DATA.forEach(c=>confMonths(c).forEach(m=>set.add(m)));
+  CONF_DATA.forEach(c=>confMonths(c).forEach(m=>{ if(m>=curYM) set.add(m); }));
   return [...set].sort();
 }
 function monthLabel(ym){
