@@ -544,20 +544,29 @@ $("#clear-all").addEventListener("click",()=>{
 
 loadConferences();
 
-// Showit iframe height passing (robust: handles mobile stacking and late font reflow)
-function postHeight(){
-  if(window.parent && window.parent!==window){
-    var hgt=Math.max(document.body.scrollHeight, document.body.offsetHeight,
-                     document.documentElement.scrollHeight, document.documentElement.offsetHeight);
-    window.parent.postMessage({type:"juniper-conferences-height", height:hgt}, "*");
+// Showit iframe height passing (robust: handles mobile stacking, rotation, and late async content)
+(function() {
+  let lastHeight = 0;
+  function measure() {
+    const b = document.body, d = document.documentElement;
+    return Math.max(b.scrollHeight, b.offsetHeight, d.scrollHeight, d.offsetHeight);
   }
-}
-window.addEventListener("load",postHeight);
-window.addEventListener("resize",postHeight);
-document.addEventListener("DOMContentLoaded",postHeight);
-if(document.fonts && document.fonts.ready) document.fonts.ready.then(postHeight);
-if(typeof ResizeObserver!=="undefined") new ResizeObserver(postHeight).observe(document.body); else setInterval(postHeight,500);
-[150,400,800,1500,3000].forEach(function(t){ setTimeout(postHeight,t); });
+  function postHeight() {
+    const height = measure();
+    if (height === lastHeight) return;
+    lastHeight = height;
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: "juniper-conferences-height", height: height }, "*");
+    }
+  }
+  ["load", "resize", "orientationchange"].forEach(ev => window.addEventListener(ev, postHeight));
+  [100, 400, 800, 1500, 3000].forEach(ms => setTimeout(postHeight, ms));
+  if (typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(postHeight).observe(document.body);
+  } else {
+    setInterval(postHeight, 750);
+  }
+})();
 </script>
 </body>
 </html>
