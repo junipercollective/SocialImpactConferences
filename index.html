@@ -62,6 +62,12 @@
   .date-field input{padding:7px 10px;border:1px solid var(--cream-dark);border-radius:4px;font-family:'Montserrat',sans-serif;font-size:12px;background:var(--white);color:var(--text-dark);}
   .date-presets{display:flex;gap:6px;flex-wrap:wrap;}
 
+  /* Year / Month panel */
+  .ym-block{margin-bottom:14px;}
+  .ym-block:last-child{margin-bottom:0;}
+  .ym-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-light);margin-bottom:8px;}
+  .ym-hint{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--text-light);}
+
   /* Price slider */
   .price-panel-inner{max-width:420px;}
   .price-readout{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:17px;color:var(--green-dark);margin-bottom:14px;}
@@ -133,7 +139,7 @@
     </div>
     <div class="filter-triggers">
       <button class="filter-trigger" data-filter="date">Dates <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
-      <button class="filter-trigger" data-filter="month">Month <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
+      <button class="filter-trigger" data-filter="when">Year <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
       <button class="filter-trigger" data-filter="country">Country <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
       <button class="filter-trigger" data-filter="city">City <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
       <button class="filter-trigger" data-filter="format">Format <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
@@ -157,7 +163,17 @@
       </div>
     </div>
   </div>
-  <div class="filter-panel" data-panel="month"><div class="panel-options" id="month-options"></div></div>
+  <div class="filter-panel" data-panel="when">
+    <div class="ym-block">
+      <div class="ym-label">Year</div>
+      <div class="panel-options" id="year-options"></div>
+    </div>
+    <div class="ym-block">
+      <div class="ym-label">Month</div>
+      <div class="panel-options" id="month-options"></div>
+      <div class="ym-hint" id="month-hint">Pick a year above to filter by month.</div>
+    </div>
+  </div>
   <div class="filter-panel" data-panel="country"><div class="panel-options" id="country-options"></div></div>
   <div class="filter-panel" data-panel="city"><div class="panel-options" id="city-options"></div></div>
   <div class="filter-panel" data-panel="format"><div class="panel-options" id="format-options"></div></div>
@@ -239,7 +255,7 @@ function cleanSponsor(s){
   return first.replace(/\s*\n\s*/g," ").replace(/\s+/g," ").trim();
 }
 
-let state = {q:"",month:new Set(),country:new Set(),city:new Set(),format:new Set(),topic:new Set(),
+let state = {q:"",year:new Set(),month:new Set(),country:new Set(),city:new Set(),format:new Set(),topic:new Set(),
   attendee:new Set(),priceMin:0,priceMax:0,includeUnpriced:true,upcoming:true,from:"",to:""};
 let PRICE_CAP = 0;
 
@@ -294,16 +310,25 @@ function confMonths(c){
   while(cur<=endM){ out.push(cur.getFullYear()+"-"+String(cur.getMonth()+1).padStart(2,"0")); cur.setMonth(cur.getMonth()+1); }
   return out;
 }
-function monthOptions(){
-  const now=today();
-  const curYM=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
-  const set=new Set();
-  CONF_DATA.forEach(c=>confMonths(c).forEach(m=>{ if(m>=curYM) set.add(m); }));
+// Current year-month ("2026-06"); used to keep options forward-facing only
+function curYM(){ const n=today(); return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0"); }
+// Distinct years ("2026") a conference covers
+function confYears(c){ return [...new Set(confMonths(c).map(m=>m.slice(0,4)))]; }
+// Years that have current/future conferences
+function yearOptions(){
+  const cy=curYM(), set=new Set();
+  CONF_DATA.forEach(c=>confMonths(c).forEach(m=>{ if(m>=cy) set.add(m.slice(0,4)); }));
   return [...set].sort();
 }
-function monthLabel(ym){
+// Current/future year-months within the given selected years
+function monthOptionsForYears(years){
+  const cy=curYM(), set=new Set();
+  CONF_DATA.forEach(c=>confMonths(c).forEach(m=>{ if(m>=cy && years.has(m.slice(0,4))) set.add(m); }));
+  return [...set].sort();
+}
+function monthLabel(ym,withYear){
   const p=ym.split("-").map(Number);
-  return new Date(p[0],p[1]-1,1).toLocaleDateString("en-US",{month:"short",year:"numeric"});
+  return new Date(p[0],p[1]-1,1).toLocaleDateString("en-US", withYear?{month:"short",year:"2-digit"}:{month:"short"});
 }
 
 function buildChips(containerId,values,setRef,filterKey,labelFn){
@@ -324,6 +349,42 @@ function updateCount(key,n){
   const el=t.querySelector(".filter-count");
   if(n>0){el.textContent=n;el.style.display="inline-block";t.classList.add("active","has-selections");}
   else{el.style.display="none";t.classList.remove("active","has-selections");}
+}
+
+// The combined Year/Month trigger badge counts both selected years and months
+function updateWhenCount(){
+  const t=document.querySelector('[data-filter="when"]'); if(!t) return;
+  const n=state.year.size+state.month.size, el=t.querySelector(".filter-count");
+  if(n>0){el.textContent=n;el.style.display="inline-block";t.classList.add("active","has-selections");}
+  else{el.style.display="none";t.classList.remove("active","has-selections");}
+}
+
+// Month chips are scoped to the selected year(s); rebuilt whenever the year selection changes
+function renderMonthChips(){
+  const c=$("#month-options"), hint=$("#month-hint");
+  if(!state.year.size){ c.innerHTML=""; hint.style.display="block"; return; }
+  hint.style.display="none";
+  const months=monthOptionsForYears(state.year), multi=state.year.size>1;
+  c.innerHTML=months.map(m=>`<button class="option${state.month.has(m)?" selected":""}" data-val="${m}">${monthLabel(m,multi)}</button>`).join("");
+  c.querySelectorAll("[data-val]").forEach(b=>b.addEventListener("click",()=>{
+    const v=b.dataset.val;
+    if(state.month.has(v)){state.month.delete(v);b.classList.remove("selected");}
+    else{state.month.add(v);b.classList.add("selected");}
+    updateWhenCount(); render();
+  }));
+}
+
+function buildYearChips(){
+  const c=$("#year-options");
+  c.innerHTML=yearOptions().map(y=>`<button class="option" data-val="${y}">${y}</button>`).join("");
+  c.querySelectorAll("[data-val]").forEach(b=>b.addEventListener("click",()=>{
+    const y=b.dataset.val;
+    if(state.year.has(y)){
+      state.year.delete(y); b.classList.remove("selected");
+      [...state.month].forEach(m=>{ if(m.slice(0,4)===y) state.month.delete(m); }); // drop that year's months
+    } else { state.year.add(y); b.classList.add("selected"); }
+    renderMonthChips(); updateWhenCount(); render();
+  }));
 }
 
 let TRIGGERS_WIRED=false;
@@ -388,6 +449,7 @@ function passesFilters(c){
   if(state.upcoming){ const de=parseISO(c.end)||parseISO(c.start); if(de && de<td) return false; }
   if(state.from){ const de=parseISO(c.end)||parseISO(c.start); if(de && de<parseISO(state.from)) return false; }
   if(state.to){ const ds=parseISO(c.start); if(ds && ds>parseISO(state.to)) return false; }
+  if(state.year.size && !confYears(c).some(y=>state.year.has(y))) return false;
   if(state.month.size && !confMonths(c).some(m=>state.month.has(m))) return false;
   if(state.country.size && !state.country.has(c.country)) return false;
   if(state.city.size && !state.city.has(c.city)) return false;
@@ -523,7 +585,7 @@ async function loadConferences(){
 
 function init(){
 setupTriggers();
-buildChips("month-options",monthOptions(),state.month,"month",monthLabel);
+buildYearChips(); renderMonthChips();
 buildChips("country-options",uniqueSorted("country"),state.country,"country");
 buildChips("city-options",uniqueSorted("city"),state.city,"city");
 buildChips("format-options",["In-Person","Virtual","Hybrid"],state.format,"format");
@@ -534,7 +596,7 @@ setupDates();
 $("#search").addEventListener("input",e=>{state.q=e.target.value.toLowerCase();render();});
 $("#upcoming-toggle").addEventListener("change",e=>{state.upcoming=e.target.checked;render();});
 $("#clear-all").addEventListener("click",()=>{
-  state.q="";["month","country","city","format","topic","attendee"].forEach(k=>state[k].clear());
+  state.q="";["year","month","country","city","format","topic","attendee"].forEach(k=>state[k].clear());
   state.from="";state.to="";state.includeUnpriced=true;
   $("#search").value="";$("#date-from").value="";$("#date-to").value="";$("#include-unpriced").checked=true;
   $("#price-min").value=0;$("#price-max").value=PRICE_CAP;state.priceMin=0;state.priceMax=PRICE_CAP;
@@ -543,6 +605,7 @@ $("#clear-all").addEventListener("click",()=>{
   document.querySelectorAll(".option").forEach(o=>o.classList.remove("selected"));
   document.querySelectorAll(".filter-trigger").forEach(t=>{t.classList.remove("active","has-selections","open");t.querySelector(".filter-count").style.display="none";});
   document.querySelectorAll(".filter-panel").forEach(p=>p.classList.remove("open"));
+  renderMonthChips();
   render();
 });
   render();
