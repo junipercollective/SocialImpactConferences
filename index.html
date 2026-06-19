@@ -46,17 +46,18 @@
   .toggle-upcoming input:checked + .toggle-track::after{transform:translateX(16px);}
 
   .clear-btn{font-size:11px;font-weight:500;color:var(--text-light);background:none;border:none;cursor:pointer;text-decoration:underline;padding:4px 8px;white-space:nowrap;font-family:'Montserrat',sans-serif;}
+  #clear-all{flex:1 1 100%;text-align:center;margin-top:6px;}
   .clear-btn:hover{color:var(--green-dark);}
 
   .filter-panel{background:var(--cream);border-top:1px solid var(--cream-dark);padding:16px 40px;display:none;}
   .filter-panel.open{display:block;}
-  .panel-options{display:flex;flex-wrap:wrap;gap:6px;}
+  .panel-options{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;}
   .option{padding:6px 12px;border-radius:16px;border:1px solid var(--cream-dark);background:var(--white);font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;color:var(--text-mid);cursor:pointer;transition:all .15s;text-transform:capitalize;}
   .option:hover{border-color:var(--green-sage);color:var(--green-dark);}
   .option.selected{background:var(--green-sage);border-color:var(--green-sage);color:var(--white);}
 
   /* Date panel */
-  .date-row{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;}
+  .date-row{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:center;}
   .date-field{display:flex;flex-direction:column;gap:4px;}
   .date-field label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-light);}
   .date-field input{padding:7px 10px;border:1px solid var(--cream-dark);border-radius:4px;font-family:'Montserrat',sans-serif;font-size:12px;background:var(--white);color:var(--text-dark);}
@@ -65,12 +66,12 @@
   /* Year / Month panel */
   .ym-block{margin-bottom:14px;}
   .ym-block:last-child{margin-bottom:0;}
-  .ym-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-light);margin-bottom:8px;}
-  .ym-hint{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--text-light);}
+  .ym-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-light);margin-bottom:8px;text-align:center;}
+  .ym-hint{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--text-light);text-align:center;}
 
   /* Price slider */
-  .price-panel-inner{max-width:420px;}
-  .price-readout{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:17px;color:var(--green-dark);margin-bottom:14px;}
+  .price-panel-inner{max-width:420px;margin:0 auto;}
+  .price-readout{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:17px;color:var(--green-dark);margin-bottom:14px;text-align:center;}
   .slider{position:relative;height:30px;}
   .slider .track{position:absolute;top:13px;left:0;right:0;height:4px;border-radius:2px;background:var(--cream-dark);}
   .slider .range{position:absolute;top:13px;height:4px;border-radius:2px;background:var(--green-sage);}
