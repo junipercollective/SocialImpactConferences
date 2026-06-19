@@ -114,7 +114,7 @@
     /* Put search on its own full-width row, then let the filter buttons fill the width and flow
        horizontally (wrapping into rows) instead of being squeezed into a narrow vertical column */
     .search-wrap{flex:1 1 100%;max-width:none;}
-    .filter-triggers{flex:1 1 100%;flex-wrap:wrap;}
+    .filter-triggers{flex:1 1 100%;flex-wrap:wrap;justify-content:center;}
   }
 </style>
 </head>
@@ -326,7 +326,9 @@ function updateCount(key,n){
   else{el.style.display="none";t.classList.remove("active","has-selections");}
 }
 
+let TRIGGERS_WIRED=false;
 function setupTriggers(){
+  if(TRIGGERS_WIRED) return; TRIGGERS_WIRED=true;
   const trigs=document.querySelectorAll(".filter-trigger");
   const panels=document.querySelectorAll(".filter-panel");
   trigs.forEach(t=>t.addEventListener("click",()=>{
@@ -502,17 +504,21 @@ function mapRow(r){
 };}
 async function loadConferences(){
   const st=$("#state"); st.style.display="block"; st.innerHTML="<p>Loading conferences...</p>";
-  if(CSV_URL==="PASTE_YOUR_PUBLISHED_CSV_URL_HERE"){ CONF_DATA=CONF_FALLBACK; init(); render(); return; }
-  try{
-    const res=await fetch(CSV_URL+(CSV_URL.includes("?")?"&":"?")+"t="+Date.now());
-    if(!res.ok) throw new Error("HTTP "+res.status);
-    CONF_DATA=parseCSV(await res.text()).map(mapRow).filter(c=>c.active==="yes"&&c.name);
-    if(!CONF_DATA.length) throw new Error("0 usable rows (is the Sheet shared publicly?)");
-    init(); render();
-  }catch(e){
-    console.warn("Live data load failed, using built-in copy:", e);
-    CONF_DATA=CONF_FALLBACK; init(); render();
+  if(CSV_URL!=="PASTE_YOUR_PUBLISHED_CSV_URL_HERE"){
+    try{
+      const res=await fetch(CSV_URL+(CSV_URL.includes("?")?"&":"?")+"t="+Date.now());
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      CONF_DATA=parseCSV(await res.text()).map(mapRow).filter(c=>c.active==="yes"&&c.name);
+      if(!CONF_DATA.length) throw new Error("0 usable rows (is the Sheet shared publicly?)");
+    }catch(e){
+      console.warn("Live data load failed, using built-in copy:", e);
+      CONF_DATA=CONF_FALLBACK;
+    }
+  } else {
+    CONF_DATA=CONF_FALLBACK;
   }
+  // init()/render() run exactly once so trigger/document click listeners are never double-bound
+  init(); render();
 }
 
 function init(){
