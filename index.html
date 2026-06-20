@@ -82,9 +82,9 @@
   .price-include input{accent-color:var(--green-sage);width:15px;height:15px;}
 
   .main{padding:12px 40px 40px;max-width:1240px;}
-  /* Indent the count so it lines up under the leftmost filter button (filters live
-     in the right grid column: 260px search column + 22px gap = 282px). */
-  .results-bar{display:flex;justify-content:flex-start;align-items:baseline;margin:0 0 10px 282px;padding-bottom:8px;}
+  /* Count sits in the white control bar, on its own full-width line under the
+     filter buttons (so it left-aligns with the leftmost filter). */
+  .results-bar{flex:0 0 100%;display:flex;justify-content:flex-start;align-items:baseline;margin:1px 0 0;}
   .results-count{font-family:'Cormorant Garamond',serif;font-size:20px;font-style:italic;color:var(--text-mid);}
   .results-count strong{color:var(--green-dark);font-style:normal;font-weight:400;}
 
@@ -150,6 +150,7 @@
       <button class="filter-trigger" data-filter="price">Price <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
       <button class="filter-trigger" data-filter="topic">Topic <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
       <button class="filter-trigger" data-filter="attendee">Who it's for <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
+      <div id="results-bar" class="results-bar" style="display:none;"><span class="results-count" id="count-label"></span></div>
     </div>
     <div class="toggle-clear">
       <label class="toggle-upcoming"><input type="checkbox" id="upcoming-toggle" checked><span class="toggle-track"></span>Upcoming only</label>
@@ -199,7 +200,6 @@
 </div>
 
 <div class="main">
-  <div id="results-bar" class="results-bar" style="display:none;"><span class="results-count" id="count-label"></span></div>
   <div class="grid" id="grid"></div>
   <div id="state" class="state-msg"><p>Loading conferences...</p></div>
 </div>
