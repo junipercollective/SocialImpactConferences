@@ -39,6 +39,13 @@
   .filter-caret{font-size:9px;transition:transform .2s;opacity:.7;}
   .filter-trigger.open .filter-caret{transform:rotate(180deg);}
 
+  /* Single "Filters" button — hidden on desktop, replaces the pills on mobile */
+  .filters-toggle{display:none;align-items:center;gap:6px;padding:8px 16px;border-radius:20px;border:1px solid var(--green-dark);background:var(--white);font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;color:var(--green-dark);cursor:pointer;white-space:nowrap;}
+  .filters-toggle .filter-caret{transition:transform .2s;}
+  .filters-toggle.open .filter-caret{transform:rotate(180deg);}
+  .filters-toggle-count{background:var(--green-dark);color:var(--cream);padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;display:none;}
+  .filters-toggle.has-selections .filters-toggle-count{display:inline-block;}
+
   .toggle-upcoming{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--text-mid);cursor:pointer;white-space:nowrap;user-select:none;}
   .toggle-upcoming input{display:none;}
   .toggle-track{width:34px;height:18px;border-radius:10px;background:var(--cream-dark);position:relative;transition:background .15s;}
@@ -126,6 +133,10 @@
     .filter-triggers{order:2;justify-content:center;}
     .toggle-clear{order:3;justify-content:center;}
     .results-bar{margin-left:0;justify-content:center;}
+    /* Collapse the filter pills behind a single "Filters" button on mobile */
+    .filters-toggle{display:inline-flex;}
+    .filter-triggers .filter-trigger{display:none;}
+    .filter-triggers.show-filters .filter-trigger{display:inline-flex;}
   }
 </style>
 </head>
@@ -142,6 +153,7 @@
       <input class="search-input" type="text" id="search" placeholder="Search conferences...">
     </div>
     <div class="filter-triggers">
+      <button class="filters-toggle" id="filters-toggle" type="button">Filters <span class="filters-toggle-count" id="filters-toggle-count">0</span><span class="filter-caret">&#9662;</span></button>
       <button class="filter-trigger" data-filter="date">Dates <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
       <button class="filter-trigger" data-filter="when">Month/Year <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
       <button class="filter-trigger" data-filter="country">Country <span class="filter-count">0</span><span class="filter-caret">&#9662;</span></button>
@@ -406,6 +418,16 @@ function setupTriggers(){
   document.addEventListener("click",e=>{
     if(!e.target.closest(".controls")){trigs.forEach(x=>x.classList.remove("open"));panels.forEach(p=>p.classList.remove("open"));}
   });
+  // Mobile-only "Filters" button: show/hide the pill row
+  const ftog=$("#filters-toggle"), ftrig=document.querySelector(".filter-triggers");
+  if(ftog&&ftrig){
+    ftog.addEventListener("click",()=>{
+      const opening=!ftrig.classList.contains("show-filters");
+      ftrig.classList.toggle("show-filters",opening);
+      ftog.classList.toggle("open",opening);
+      if(!opening){trigs.forEach(x=>x.classList.remove("open"));panels.forEach(p=>p.classList.remove("open"));}
+    });
+  }
 }
 
 // Price slider
@@ -521,7 +543,16 @@ function card(c,i){
   </div>`;
 }
 
+// Show the number of active filter categories on the mobile "Filters" button
+function updateFiltersBadge(){
+  const tog=$("#filters-toggle"); if(!tog) return;
+  const n=document.querySelectorAll(".filter-trigger.active").length;
+  tog.querySelector(".filters-toggle-count").textContent=n;
+  tog.classList.toggle("has-selections",n>0);
+}
+
 function render(){
+  updateFiltersBadge();
   const list=CONF_DATA.filter(passesFilters).sort((a,b)=>(parseISO(a.start)||0)-(parseISO(b.start)||0));
   const grid=$("#grid"), bar=$("#results-bar"), st=$("#state");
   if(!list.length){ grid.innerHTML=""; bar.style.display="none"; st.style.display="block"; st.innerHTML="<p>No conferences match your filters.</p>"; return; }
