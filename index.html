@@ -121,6 +121,10 @@
   .state-msg{text-align:center;padding:70px 40px;}
   .state-msg p{font-family:'Cormorant Garamond',serif;font-size:20px;font-style:italic;color:var(--text-light);}
 
+  /* Soft fade at the very bottom of the fixed-height embed window so a partial
+     card at the edge fades into the background instead of cutting off hard. */
+  body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:40px;background:linear-gradient(to bottom,rgba(242,237,228,0),var(--cream));pointer-events:none;z-index:60;}
+
   @media(max-width:600px){
     .header{padding:20px 18px 16px;}
     .filter-panel{padding:14px 20px;}
