@@ -125,6 +125,16 @@
      card at the edge fades into the background instead of cutting off hard. */
   body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:40px;background:linear-gradient(to bottom,rgba(242,237,228,0),var(--cream));pointer-events:none;z-index:60;}
 
+  /* Touch-friendly drag handle pinned to the right edge of the embed so visitors
+     can grab and fly through the events list. Hidden by default; only shown on
+     the narrower embed widths, and only when the list actually overflows (the
+     .scrollable class is toggled by JS). */
+  .grab-rail{display:none;position:fixed;top:0;right:0;width:18px;height:100%;z-index:200;pointer-events:none;}
+  .grab-rail::before{content:"";position:absolute;top:10px;bottom:48px;right:7px;width:3px;border-radius:2px;background:rgba(48,82,58,.12);}
+  .grab-thumb{position:absolute;right:3px;top:14px;width:11px;height:74px;border-radius:7px;background:var(--green-sage);box-shadow:0 1px 5px rgba(0,0,0,.3);cursor:grab;touch-action:none;pointer-events:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
+  .grab-thumb span{width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,.85);}
+  .grab-thumb:active{cursor:grabbing;}
+
   /* Collapse the filter pills behind a single, clearly-labelled "Filters" button
      so the list of events shows immediately instead of being pushed down. The
      breakpoint sits above the mobile embed width (Showit serves the mobile embed
@@ -135,6 +145,7 @@
     .filters-toggle{display:inline-flex;}
     .filter-triggers .filter-trigger{display:none;}
     .filter-triggers.show-filters .filter-trigger{display:inline-flex;}
+    .grab-rail.scrollable{display:block;}
   }
 
   @media(max-width:600px){
@@ -227,6 +238,8 @@
   <div class="grid" id="grid"></div>
   <div id="state" class="state-msg"><p>Loading conferences...</p></div>
 </div>
+
+<div class="grab-rail" aria-hidden="true"><div class="grab-thumb" id="grab-thumb"><span></span><span></span><span></span></div></div>
 
 <script>
 let CONF_DATA = [];
@@ -660,6 +673,41 @@ $("#clear-all").addEventListener("click",()=>{
 }
 
 loadConferences();
+
+// Draggable scroll handle (right edge). Drag the thumb to scroll the list; the
+// thumb tracks the scroll position and the whole rail hides when there's nothing
+// to scroll (e.g. a filtered-down list that already fits).
+(function(){
+  const rail=document.querySelector(".grab-rail"), thumb=document.getElementById("grab-thumb");
+  if(!rail||!thumb) return;
+  const PAD=14; // top/bottom inset of the thumb's travel within the rail
+  const maxScroll=()=>document.documentElement.scrollHeight-window.innerHeight;
+  function refresh(){
+    const ms=maxScroll();
+    rail.classList.toggle("scrollable", ms>40);
+    if(ms<=40) return;
+    const travel=rail.clientHeight-thumb.offsetHeight-PAD*2;
+    thumb.style.top=(PAD+(window.scrollY/ms)*travel)+"px";
+  }
+  let dragging=false, startY=0, startScroll=0;
+  thumb.addEventListener("pointerdown",e=>{
+    dragging=true; startY=e.clientY; startScroll=window.scrollY;
+    thumb.setPointerCapture(e.pointerId); e.preventDefault();
+  });
+  thumb.addEventListener("pointermove",e=>{
+    if(!dragging) return;
+    const travel=rail.clientHeight-thumb.offsetHeight-PAD*2;
+    window.scrollTo(0, startScroll+((e.clientY-startY)/travel)*maxScroll());
+  });
+  const end=()=>{dragging=false;};
+  thumb.addEventListener("pointerup",end); thumb.addEventListener("pointercancel",end);
+  window.addEventListener("scroll",refresh,{passive:true});
+  window.addEventListener("resize",refresh);
+  // Recompute after the grid (re)renders, since the list height changes with filters.
+  const grid=document.getElementById("grid");
+  if(grid && window.MutationObserver){ new MutationObserver(refresh).observe(grid,{childList:true}); }
+  setTimeout(refresh,400);
+})();
 </script>
 </body>
 </html>
