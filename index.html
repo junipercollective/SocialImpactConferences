@@ -146,6 +146,11 @@
     .filter-triggers .filter-trigger{display:none;}
     .filter-triggers.show-filters .filter-trigger{display:inline-flex;}
     .grab-rail.scrollable{display:block;}
+    /* Tuck "Upcoming only" + "Clear all" under the Filters tab too, so the
+       collapsed bar is just search + Filters + count. They reappear when the
+       filters are expanded. */
+    .toggle-clear{display:none;}
+    .filter-triggers.show-filters ~ .toggle-clear{display:flex;}
   }
 
   @media(max-width:600px){
@@ -674,37 +679,53 @@ $("#clear-all").addEventListener("click",()=>{
 
 loadConferences();
 
-// Draggable scroll handle (right edge). Drag the thumb to scroll the list; the
-// thumb tracks the scroll position and the whole rail hides when there's nothing
-// to scroll (e.g. a filtered-down list that already fits).
+// Draggable scroll handle (right edge). It governs the events list only: the rail
+// is pinned just below the sticky filter bar, dragging the thumb to the top lands
+// on the first event (never the page header), and the whole rail hides when the
+// list already fits without scrolling.
 (function(){
   const rail=document.querySelector(".grab-rail"), thumb=document.getElementById("grab-thumb");
   if(!rail||!thumb) return;
-  const PAD=14; // top/bottom inset of the thumb's travel within the rail
+  const PAD=12; // top/bottom inset of the thumb's travel within the rail
+  const controls=document.querySelector(".controls");
+  const grid=document.getElementById("grid");
   const maxScroll=()=>document.documentElement.scrollHeight-window.innerHeight;
+  const ctrlBottom=()=>controls?Math.max(0,controls.getBoundingClientRect().bottom):0;
+  // Scroll position at which the first event sits just under the sticky filters.
+  const minScroll=()=>{
+    if(!grid) return 0;
+    const top=window.scrollY+grid.getBoundingClientRect().top-(controls?controls.offsetHeight:0);
+    return Math.max(0, Math.min(top, maxScroll()));
+  };
+  const travel=()=>rail.clientHeight-thumb.offsetHeight-PAD*2;
   function refresh(){
-    const ms=maxScroll();
-    rail.classList.toggle("scrollable", ms>40);
-    if(ms<=40) return;
-    const travel=rail.clientHeight-thumb.offsetHeight-PAD*2;
-    thumb.style.top=(PAD+(window.scrollY/ms)*travel)+"px";
+    // Keep the rail in the events area, below the (sticky) filter bar.
+    const cb=ctrlBottom();
+    rail.style.top=cb+"px";
+    rail.style.height=(window.innerHeight-cb)+"px";
+    const mn=minScroll(), mx=maxScroll(), range=mx-mn;
+    rail.classList.toggle("scrollable", range>40);
+    if(range<=40) return;
+    const frac=Math.max(0, Math.min(1, (window.scrollY-mn)/range));
+    thumb.style.top=(PAD+frac*travel())+"px";
   }
   let dragging=false, startY=0, startScroll=0;
   thumb.addEventListener("pointerdown",e=>{
-    dragging=true; startY=e.clientY; startScroll=window.scrollY;
+    dragging=true; startY=e.clientY;
+    startScroll=Math.max(minScroll(), Math.min(maxScroll(), window.scrollY));
     thumb.setPointerCapture(e.pointerId); e.preventDefault();
   });
   thumb.addEventListener("pointermove",e=>{
     if(!dragging) return;
-    const travel=rail.clientHeight-thumb.offsetHeight-PAD*2;
-    window.scrollTo(0, startScroll+((e.clientY-startY)/travel)*maxScroll());
+    const mn=minScroll(), mx=maxScroll();
+    const target=startScroll+((e.clientY-startY)/travel())*(mx-mn);
+    window.scrollTo(0, Math.max(mn, Math.min(mx, target)));
   });
   const end=()=>{dragging=false;};
   thumb.addEventListener("pointerup",end); thumb.addEventListener("pointercancel",end);
   window.addEventListener("scroll",refresh,{passive:true});
   window.addEventListener("resize",refresh);
   // Recompute after the grid (re)renders, since the list height changes with filters.
-  const grid=document.getElementById("grid");
   if(grid && window.MutationObserver){ new MutationObserver(refresh).observe(grid,{childList:true}); }
   setTimeout(refresh,400);
 })();
